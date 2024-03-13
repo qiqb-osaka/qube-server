@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  labrad:
+    build:
+      context: .
+    volumes:
+      - ./.labrad:/root/.labrad
+      - ./lib:/root/lib
+      - ./config:/root/config
+      - ./script:/root/script
+      - ./log:/root/log
+      - ./work:/root/work
+    network_mode: "host"
+    environment:
+      - LABRADPORT=7682
