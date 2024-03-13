@@ -56,7 +56,7 @@ RUN pip install --upgrade pip && \
     h5py
 
 # install pip dependencies for MT
-RUN pip install tqdm IPython typer scikit-learn lmfit
+RUN pip install tqdm IPython typer scikit-learn lmfit qutip networkx matplotlib numpy scipy
 
 # back to root directory
 WORKDIR /root
