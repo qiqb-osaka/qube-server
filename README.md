@@ -36,19 +36,16 @@ Navigate to the project directory and build and run the services with Docker Com
 
 ```bash
 cd qube-server
-cd lib && sh setup.sh && cd ..
+cd docker/lib && sh setup.sh && cd ..
+
+# add executable
+chmod +x script/*.sh
 
 # build all services
 docker compose build
 
 # run all services
 docker compose up -d
-
-# run a specific service
-docker compose up -d labrad
-
-# show logs
-docker compose logs -f
 ```
 
 ## Services
