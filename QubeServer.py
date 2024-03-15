@@ -444,6 +444,22 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
 
         yield super(QuBE_Control_LSI, self).get_connected(*args, **kw)
 
+        # TODO: debug
+        print("get_connected")
+        print("args:", args)
+        print("kw:", kw)
+        print("self:", dir(self))
+        print("device_name:", self.device_name)
+        print("chassis_name:", self.chassis_name)
+
+        awg_ctrl = kw["awg_ctrl"]
+        print("awg_ctrl:", awg_ctrl)
+        print("awg_ctrl dir:", dir(awg_ctrl))
+        #print("awg_ctrl.ip_addr:", awg_ctrl.ip_addr)
+        #print("awg_ctrl._ip_addr:", awg_ctrl._ip_addr)
+        #print("awg_ctrl.__ip_addr:", awg_ctrl.__ip_addr)
+        print("ipaddr_synchronization", self.ipaddr_synchronization)
+
         self.__initialized = False
         try:
             self._nco_ctrl = kw["nco_device"]
@@ -3627,4 +3643,5 @@ if __name__ == "__main__":
     #  print sys.argv
     #  if sys.argv:
     #    del sys.argv[1:]
+    print("tmori dev mode2")
     util.runServer(__server__)

@@ -135,4 +135,5 @@ dmypy.json
 docker/lib/
 docker/work/
 docker/log/
+docker/.labrad/
 

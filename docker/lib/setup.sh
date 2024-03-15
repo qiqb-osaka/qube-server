@@ -11,7 +11,6 @@ git clone https://github.com/qiqb-osaka/adi_api_mod.git
 git clone https://github.com/qiqb-osaka/qube-calib-env.git
 cd qube-calib-env
 git submodule update --init
-cp -r e7awg_sw ../
 cd ..
 
 # download qube_master with additional libraries from local directory
