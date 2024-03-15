@@ -57,6 +57,7 @@ import subprocess
 import concurrent
 from labrad.concurrent import future_to_deferred
 
+from quel_ic_config import Quel1Box, Quel1BoxType
 
 ############################################################
 #
@@ -445,23 +446,25 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
         yield super(QuBE_Control_LSI, self).get_connected(*args, **kw)
 
         # TODO: debug
-        print("get_connected")
-        print("args:", args)
         print("kw:", kw)
-        print("self:", dir(self))
-        print("device_name:", self.device_name)
-        print("chassis_name:", self.chassis_name)
-
-        awg_ctrl = kw["awg_ctrl"]
-        print("awg_ctrl:", awg_ctrl)
-        print("awg_ctrl dir:", dir(awg_ctrl))
-        #print("awg_ctrl.ip_addr:", awg_ctrl.ip_addr)
-        #print("awg_ctrl._ip_addr:", awg_ctrl._ip_addr)
-        #print("awg_ctrl.__ip_addr:", awg_ctrl.__ip_addr)
-        print("ipaddr_synchronization", self.ipaddr_synchronization)
 
         self.__initialized = False
         try:
+            ipfpga = kw[QSConstants.SRV_IPFPGA_TAG]
+            iplsi = kw[QSConstants.SRV_IPLSI_TAG]
+            ipsync = kw[QSConstants.SRV_IPCLK_TAG]
+            device_type=self.convert_device_type_for_quelware(kw["device_type"])
+
+            box = Quel1Box.create(
+                ipaddr_wss=ipfpga,
+                ipaddr_sss=ipsync,
+                ipaddr_css=iplsi,
+                boxtype=device_type,
+            )
+            box.reconnect()
+            # use only box.css
+            self._css = box.css
+
             self._nco_ctrl = kw["nco_device"]
             self._lo_ctrl = kw["lo_device"]
             self._mix_ctrl = kw["mix_device"]
@@ -483,6 +486,15 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
         if self.__initialized:
             self._fine_frequencies = [0 for i in range(self._fnco_chs)]
         yield
+
+    def convert_device_type_for_quelware(self, device_type):
+        # TODO: addhoc
+        if device_type == "A":
+            return Quel1BoxType.QuEL1_TypeA
+        elif device_type == "B":
+            return Quel1BoxType.QuEL1_TypeB
+        else:
+            return None
 
     def get_lo_frequency(self):
         return self._lo_ctrl.read_freq_100M() * 100
@@ -981,7 +993,7 @@ class QuBE_Server(DeviceServer):
         )
         return self.deviceWrappers[tag]
 
-    def instantiateChannel(self, name, channels, awg_ctrl, cap_ctrl, lsi_ctrl):
+    def instantiateChannel(self, name, channels, awg_ctrl, cap_ctrl, lsi_ctrl, info):
         def gen_awg(name, role, chassis, channel, awg_ctrl, cap_ctrl, lsi_ctrl):
             awg_ch_ids = channel["ch_dac"]
             cnco_id = channel["cnco_dac"]
@@ -992,6 +1004,10 @@ class QuBE_Server(DeviceServer):
             nco_device = lsi_ctrl.ad9082[cnco_id[0]]
             lo_device = lsi_ctrl.lmx2594[lo_id]
             mix_device = lsi_ctrl.adrf6780[mix_id]
+            ipfpga = info[QSConstants.SRV_IPFPGA_TAG]
+            iplsi = info[QSConstants.SRV_IPLSI_TAG]
+            ipsync = info[QSConstants.SRV_IPCLK_TAG]
+            device_type = info["type"]
 
             args = name, role
             kw = dict(
@@ -1004,6 +1020,10 @@ class QuBE_Server(DeviceServer):
                 mix_device=mix_device,
                 mix_sb=mix_sb,
                 chassis=chassis,
+                ipfpga=ipfpga,
+                iplsi=iplsi,
+                ipsync=ipsync,
+                device_type=device_type,
             )
             return (name, args, kw)
 
@@ -1072,7 +1092,7 @@ class QuBE_Server(DeviceServer):
 
         try:
             devices = self.instantiateChannel(
-                name, channels, awg_ctrl, cap_ctrl, lsi_ctrl
+                name, channels, awg_ctrl, cap_ctrl, lsi_ctrl, info
             )
         except Exception as e:
             print(sys._getframe().f_code.co_name, e)
@@ -2139,9 +2159,9 @@ class QuBE_Server_debug_otasuke(QuBE_Server):
     def __init__(self, *args, **kw):
         QuBE_Server.__init__(self, *args, **kw)
 
-    def instantiateChannel(self, name, channels, awg_ctrl, cap_ctrl, lsi_ctrl):
+    def instantiateChannel(self, name, channels, awg_ctrl, cap_ctrl, lsi_ctrl, info):
         devices = super(QuBE_Server_debug_otasuke, self).instantiateChannel(
-            name, channels, awg_ctrl, cap_ctrl, lsi_ctrl
+            name, channels, awg_ctrl, cap_ctrl, lsi_ctrl, info
         )
         revised = []
         for device, channel in zip(devices, channels):
