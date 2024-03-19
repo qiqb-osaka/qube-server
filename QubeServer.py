@@ -59,6 +59,8 @@ from labrad.concurrent import future_to_deferred
 
 from quel_ic_config import Quel1Box, Quel1BoxType
 
+USE_QUELWARE = True
+
 ############################################################
 #
 # CONSTANTS
@@ -465,6 +467,7 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
             # use only box.css
             self._css = box.css
 
+            # TODO: if USE_QUELWARE == False:
             self._nco_ctrl = kw["nco_device"]
             self._lo_ctrl = kw["lo_device"]
             self._mix_ctrl = kw["mix_device"]
@@ -497,17 +500,28 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
             return None
 
     def get_lo_frequency(self):
-        return self._lo_ctrl.read_freq_100M() * 100
+        # TODO:
+        #if USE_QUELWARE:
+        if 0:
+            return self._css.get_lo_multiplier()
+        else:
+            return self._lo_ctrl.read_freq_100M() * 100
 
+    # TODO:
     def set_lo_frequency(self, freq_in_mhz):
         return self._lo_ctrl.write_freq_100M(int(freq_in_mhz // 100))
 
     def get_mix_sideband(self):
-        resp = self._mix_ctrl.read_mode() & 0x0400
-        if 0x400 == resp:
-            return QSConstants.CNL_MXLSB_VAL
+        # TODO:
+        #if USE_QUELWARE:
+        if 0:
+            return self._css.get_sideband()
         else:
-            return QSConstants.CNL_MXUSB_VAL
+            resp = self._mix_ctrl.read_mode() & 0x0400
+            if 0x400 == resp:
+                return QSConstants.CNL_MXLSB_VAL
+            else:
+                return QSConstants.CNL_MXUSB_VAL
 
     def set_mix_sideband(self, sideband: str):
         if QSConstants.CNL_MXUSB_VAL == sideband:
