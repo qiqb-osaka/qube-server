@@ -455,7 +455,7 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
             ipfpga = kw[QSConstants.SRV_IPFPGA_TAG]
             iplsi = kw[QSConstants.SRV_IPLSI_TAG]
             ipsync = kw[QSConstants.SRV_IPCLK_TAG]
-            device_type=self.convert_device_type_for_quelware(kw["device_type"])
+            device_type=kw["device_type"]
 
             box = Quel1Box.create(
                 ipaddr_wss=ipfpga,
@@ -466,6 +466,8 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
             box.reconnect()
             # use only box.css
             self._css = box.css
+            self._group = kw["group"]
+            self._line = kw["line"]
 
             # TODO: if USE_QUELWARE == False:
             self._nco_ctrl = kw["nco_device"]
@@ -490,32 +492,25 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
             self._fine_frequencies = [0 for i in range(self._fnco_chs)]
         yield
 
-    def convert_device_type_for_quelware(self, device_type):
-        # TODO: addhoc
-        if device_type == "A":
-            return Quel1BoxType.QuEL1_TypeA
-        elif device_type == "B":
-            return Quel1BoxType.QuEL1_TypeB
-        else:
-            return None
-
     def get_lo_frequency(self):
-        # TODO:
-        #if USE_QUELWARE:
-        if 0:
-            return self._css.get_lo_multiplier()
+        if USE_QUELWARE:
+            return self._css.get_lo_multiplier(self._group, self._line) * 100
         else:
             return self._lo_ctrl.read_freq_100M() * 100
 
-    # TODO:
     def set_lo_frequency(self, freq_in_mhz):
-        return self._lo_ctrl.write_freq_100M(int(freq_in_mhz // 100))
+        if USE_QUELWARE:
+            return self._css.set_lo_multiplier(self._group, self._line, int(freq_in_mhz // 100))
+        else:
+            return self._lo_ctrl.write_freq_100M(int(freq_in_mhz // 100))
 
     def get_mix_sideband(self):
-        # TODO:
-        #if USE_QUELWARE:
-        if 0:
-            return self._css.get_sideband()
+        if USE_QUELWARE:
+            resp = self._css.get_sideband(self._group, self._line)
+            if resp == "U":
+                return QSConstants.CNL_MXUSB_VAL
+            else:
+                return QSConstants.CNL_MXLSB_VAL
         else:
             resp = self._mix_ctrl.read_mode() & 0x0400
             if 0x400 == resp:
@@ -524,22 +519,39 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
                 return QSConstants.CNL_MXUSB_VAL
 
     def set_mix_sideband(self, sideband: str):
-        if QSConstants.CNL_MXUSB_VAL == sideband:
-            self._mix_ctrl.set_usb()
-        elif QSConstants.CNL_MXLSB_VAL == sideband:
-            self._mix_ctrl.set_lsb()
+        if USE_QUELWARE:
+            if sideband == QSConstants.CNL_MXUSB_VAL:
+                qwsb = "U"
+            else:
+                qwsb = "L"
+            self._css.set_sideband(self._group, self._line, qwsb)
+            self._mix_usb_lsb = sideband
         else:
-            return
-        self._mix_usb_lsb = sideband
+            if QSConstants.CNL_MXUSB_VAL == sideband:
+                self._mix_ctrl.set_usb()
+            elif QSConstants.CNL_MXLSB_VAL == sideband:
+                self._mix_ctrl.set_lsb()
+            else:
+                return
+            self._mix_usb_lsb = sideband
 
+    # TODO: NCO
     def get_dac_coarse_frequency(self):
-        return self.static_get_dac_coarse_frequency(self._nco_ctrl, self._cnco_id)
+        if USE_QUELWARE:
+            return self._css.get_dac_cnco(self._group, self._line)
+        else:
+            return self.static_get_dac_coarse_frequency(self._nco_ctrl, self._cnco_id)
 
     def set_dac_coarse_frequency(self, freq_in_mhz):
-        self._nco_ctrl.set_nco(
-            1e6 * freq_in_mhz, self._cnco_id, adc_mode=False, fine_mode=False
-        )
-        self._coarse_frequency = freq_in_mhz
+        if USE_QUELWARE:
+            # self._css.set_dac_cnco(self._group, self._line, int(freq_in_mhz))
+            # self._coarse_frequency = freq_in_mhz
+            pass
+        else:
+            self._nco_ctrl.set_nco(
+                1e6 * freq_in_mhz, self._cnco_id, adc_mode=False, fine_mode=False
+            )
+            self._coarse_frequency = freq_in_mhz
 
     def get_dac_fine_frequency(self, channel):
         return self.static_get_dac_fine_frequency(
@@ -579,6 +591,9 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
             res = nco_ctrl.read_value(0x1A7 - i)
             ftw = ftw << 8 | res
         return ftw
+
+
+
 
     def static_check_lo_frequency(self, freq_in_mhz):
         resolution = QSConstants.DAQ_LO_RESOL
@@ -1007,6 +1022,118 @@ class QuBE_Server(DeviceServer):
         )
         return self.deviceWrappers[tag]
 
+    # 例：QuEL-1 Type-A の場合
+    # | MxFEの番号 | DAC番号 | (group, line)　 | ポート番号 | 機能 |
+    # |-----------|--------|----------------|-------|------|
+    # | 0       | 0     | (0, 0)         | 1     | Read-out |
+    # | 0       | 1     | (0, 1)         | 3     | Pump |
+    # | 0       | 2     | (0, 2)         | 2     | Ctrl |
+    # | 0       | 3     | (0, 3)         | 4     | Ctrl |
+    # | 1       | 3     | (1, 0)         | 8     | Read-out |
+    # | 1       | 2     | (1, 1)         | 10    | Pump |
+    # | 1       | 1     | (1, 2)         | 11    | Ctrl |
+    # | 1       | 0     | (1, 3)         | 9     | Ctrl |
+
+    # 例：Quel-1 Type-B の場合
+    # | MxFEの番号 | DAC番号 | (group, line)　 | ポート番号 | 機能   |
+    # |-----------|--------|----------------|-------|------|
+    # | 0       | 0     | (0, 0)         | 1     | Ctrl |
+    # | 0       | 1     | (0, 1)         | 2     | Ctrl |
+    # | 0       | 2     | (0, 2)         | 3     | Ctrl |
+    # | 0       | 3     | (0, 3)         | 4     | Ctrl |
+    # | 1       | 3     | (1, 0)         | 8     | Ctrl |
+    # | 1       | 2     | (1, 1)         | 9     | Ctrl |
+    # | 1       | 1     | (1, 2)         | 11    | Ctrl |
+    # | 1       | 0     | (1, 3)         | 10    | Ctrl |
+    # おそらくtype:Bの場合、全部これ
+
+    # 例: QuBE の場合
+    # | MxFEの番号 | DAC番号 | (group, line)　 | ポート番号 | Type-A機能 | Type-B 機能 |
+    # |-----------|--------|----------------|-------|----------|-----------|
+    # | 0       | 0     | (0, 0)         | 0     | Read-out | Ctrl      |
+    # | 0       | 1     | (0, 1)         | 2     | Pump     | Ctrl      |
+    # | 0       | 2     | (0, 2)         | 5     | Ctrl     | Ctrl      |
+    # | 0       | 3     | (0, 3)         | 6     | Ctrl     | Ctrl      |
+    # | 1       | 3     | (1, 0)         | 13    | Read-out | Ctrl      |
+    # | 1       | 2     | (1, 1)         | 11    | Pump     | Ctrl      |
+    # | 1       | 1     | (1, 2)         | 8     | Ctrl     | Ctrl      |
+    # | 1       | 0     | (1, 3)         | 7     | Ctrl     | Ctrl      |
+
+    # TODO: とりあえずコンバートテーブルを作るが後でPossibleLinksで登録する
+    def convert_device_type_for_quelware(self, name, type) -> Quel1BoxType:
+        if "ou" in name:
+            if type == "A":
+                return Quel1BoxType.QuBE_OU_TypeA
+            elif type == "B":
+                return Quel1BoxType.QuBE_OU_TypeB
+            else:
+                return None
+        elif "riken" in name:
+            if type == "A":
+                return Quel1BoxType.QuBE_RIKEN_TypeA
+            elif type == "B":
+                return Quel1BoxType.QuBE_RIKEN_TypeB
+            else:
+                return None
+        # TODO: 名前がQuel-1だが、Port配置はQuBEと同じになっている模様。
+        elif "Quel-1" in name:
+            if type == "A":
+                return Quel1BoxType.QuBE_OU_TypeA
+            elif type == "B":
+                return Quel1BoxType.QuBE_OU_TypeB
+            else:
+                return None
+        elif "Quel" in name:
+            if type == "A":
+                return Quel1BoxType.QuEL1_TypeA
+            elif type == "B":
+                return Quel1BoxType.QuEL1_TypeB
+            else:
+                return None
+        return None
+
+    # TODO: PossibleLinksで登録するようになったらこれも不要
+    def get_port_from_name(self, name):
+        # 名前の後ろにポート番号がつく（16進数なので注意）
+        # readout_cdの場合は、13
+        # a: 10
+        # b: 11
+        # c: 12
+        # d: 13
+        #print("name:", name)
+        idx = name.rfind("_")
+        try:
+            port = name[idx + 1:]
+            # TODO: debug
+            #print("port:", port)
+            if port == "01":
+                # 01だとportは0らしい
+                return 0
+            elif port == "cd":
+                return 13
+            elif port == "a":
+                return 10
+            elif port == "b":
+                return 11
+            return int(port)
+        except Exception:
+            return -1
+
+    # TODO: とりあえずコンバートテーブルを作るが後でPossibleLinksで登録する
+    def convert_device_group_and_line(self, name, type):
+        # TODO: QuEL-1 Type-Aは放置
+        matrix_a = {0:(0,0), 2:(0,1), 5:(0,2), 6:(0,3), 13:(1,0), 11:(1,1), 8:(1,3), 7:(1,2)}
+        matrix_b = {1:(0,0), 2:(0,1), 3:(0,2), 4:(0,3), 8:(1,0), 9:(1,1), 10:(1,3), 11:(1,2)}
+        port = self.get_port_from_name(name)
+        # TODO: debug
+        # print("port:", port)
+        # print("type:", type)
+        if type == "B":
+            return matrix_b.get(port)
+        else:
+            # TODO: QuEL-1 Type-Aは放置
+            return matrix_a.get(port)
+
     def instantiateChannel(self, name, channels, awg_ctrl, cap_ctrl, lsi_ctrl, info):
         def gen_awg(name, role, chassis, channel, awg_ctrl, cap_ctrl, lsi_ctrl):
             awg_ch_ids = channel["ch_dac"]
@@ -1021,7 +1148,15 @@ class QuBE_Server(DeviceServer):
             ipfpga = info[QSConstants.SRV_IPFPGA_TAG]
             iplsi = info[QSConstants.SRV_IPLSI_TAG]
             ipsync = info[QSConstants.SRV_IPCLK_TAG]
-            device_type = info["type"]
+            # # TODO: debug
+            # print("name:", name)
+            # print("channel:", channel)
+            # print("channel:name:", channel[QSConstants.CNL_NAME_TAG])
+            device_type = self.convert_device_type_for_quelware(name, info["type"])
+            group, line = self.convert_device_group_and_line(channel[QSConstants.CNL_NAME_TAG], info["type"])
+            # TODO: debug
+            # print("group:", group)
+            # print("line:", line)
 
             args = name, role
             kw = dict(
@@ -1038,6 +1173,8 @@ class QuBE_Server(DeviceServer):
                 iplsi=iplsi,
                 ipsync=ipsync,
                 device_type=device_type,
+                group=group,
+                line=line,
             )
             return (name, args, kw)
 
@@ -1084,6 +1221,8 @@ class QuBE_Server(DeviceServer):
         return devices
 
     def instantiateQube(self, name, info):
+        # TODO: debug
+        #print("info:", info)
         try:
             ipfpga = info[QSConstants.SRV_IPFPGA_TAG]
             iplsi = info[QSConstants.SRV_IPLSI_TAG]
