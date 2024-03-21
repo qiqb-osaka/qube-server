@@ -448,13 +448,16 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
         yield super(QuBE_Control_LSI, self).get_connected(*args, **kw)
 
         # TODO: debug
-        print("kw:", kw)
+        #print("kw:", kw)
 
         self.__initialized = False
         try:
-            ipfpga = kw[QSConstants.SRV_IPFPGA_TAG]
-            iplsi = kw[QSConstants.SRV_IPLSI_TAG]
-            ipsync = kw[QSConstants.SRV_IPCLK_TAG]
+            # ipfpga = kw[QSConstants.SRV_IPFPGA_TAG]
+            # iplsi = kw[QSConstants.SRV_IPLSI_TAG]
+            # ipsync = kw[QSConstants.SRV_IPCLK_TAG]
+            ipfpga = kw["ipfpga"]
+            iplsi = kw["iplsi"]
+            ipsync = kw["ipsync"]
             device_type=kw["device_type"]
 
             box = Quel1Box.create(
@@ -479,13 +482,17 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
             self._fnco_chs = len(self._fnco_ids)
             self._mix_usb_lsb = kw["mix_sb"]
 
+            #print("start _lo_frequency")
             self._lo_frequency = (
                 self.get_lo_frequency()
             )  # DEBUG: for buffered operation, not used.
+            #print("start get_dac_coarse_frequency")
             self._coarse_frequency = self.get_dac_coarse_frequency()
             # DEBUG: for buffered operation, partly used.
             self.__initialized = True
+            #print("end __initialized")
         except Exception as e:
+            print("Exception!!!!!!!!")
             print(sys._getframe().f_code.co_name, e)
 
         if self.__initialized:
@@ -1188,6 +1195,7 @@ class QuBE_Server(DeviceServer):
                 group=group,
                 line=line,
             )
+
             return (name, args, kw)
 
         def gen_mux(name, role, chassis, channel, awg_ctrl, cap_ctrl, lsi_ctrl):
