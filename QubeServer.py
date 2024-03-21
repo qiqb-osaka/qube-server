@@ -471,6 +471,7 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
             self._css = box.css
             self._group = kw["group"]
             self._line = kw["line"]
+            self._rline = kw["rline"]
 
             # TODO: if USE_QUELWARE == False:
             self._nco_ctrl = kw["nco_device"]
@@ -489,6 +490,13 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
             #print("start get_dac_coarse_frequency")
             self._coarse_frequency = self.get_dac_coarse_frequency()
             # DEBUG: for buffered operation, partly used.
+
+            # FIXME: あとで消す
+            # # ADC
+            # print("start cdnco_id")
+            # self._rxcnco_id = kw["cdnco_id"]
+            # print("end cdnco_id")
+
             self.__initialized = True
             #print("end __initialized")
         except Exception as e:
@@ -632,6 +640,28 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
             )
         return resp
 
+    # # ADC
+    # def set_adc_coarse_frequency(self, freq_in_mhz):
+    #     if USE_QUELWARE:
+    #         # TODO: 1e6でよい？
+    #         self._css.set_adc_cnco(self._group, self._line, 1e6 * freq_in_mhz)
+    #         self._rx_coarse_frequency = freq_in_mhz  # DEBUG seems not used right now
+    #     else:
+    #         self._nco_ctrl.set_nco(
+    #             1e6 * freq_in_mhz, self._rxcnco_id, adc_mode=True, fine_mode=False
+    #         )
+    #         self._rx_coarse_frequency = freq_in_mhz  # DEBUG seems not used right now
+
+    # # self._rxcnco_idとは何か？
+    # def get_adc_coarse_frequency(self):
+    #     if USE_QUELWARE:
+    #         return self._css.get_adc_cnco(self._group, self._line)
+    #     else:
+    #         return self.static_get_adc_coarse_frequency(self._nco_ctrl, self._rxcnco_id)
+
+    # def static_get_adc_coarse_frequency(self, nco_ctrl, ch):
+    #     piw = self.static_get_adc_coarse_ftw(nco_ctrl, ch)
+    #     return QSConstants.ADC_SAMPLE_R / (2**QSConstants.DAQ_CNCO_BITS) * piw
 
 class QuBE_ControlLine(QuBE_Control_FPGA, QuBE_Control_LSI):
 
@@ -655,10 +685,15 @@ class QuBE_ReadoutLine(QuBE_ControlLine):
             self._cap_unit = kw["capture_units"]
             self._rxcnco_id = kw["cdnco_id"]
 
+            print("QuBE_ReadoutLine kw:", kw)
+            # TODO: debug
+            print("start get_adc_coarse_frequency()")
             self._rx_coarse_frequency = self.get_adc_coarse_frequency()
+            print("end get_adc_coarse_frequency()")
             # print(self._name,'rxnco',self._rx_coarse_frequency)
             self.__initialized = True
         except Exception as e:
+            print("Exception: QuBE_ReadoutLine!!!!!!!!")
             print(sys._getframe().f_code.co_name, e)
 
         if self.__initialized:
@@ -914,14 +949,38 @@ class QuBE_ReadoutLine(QuBE_ControlLine):
         self._cap_ctrl.select_trigger_awg(self._cap_mod_id, trigger_board)
         self._cap_ctrl.enable_start_trigger(*enabled_capture_units)
 
+    # TODO: quelware
+    # QuBE_Control_LSIで実装してそれを呼ぶようにしたい
     def set_adc_coarse_frequency(self, freq_in_mhz):
-        self._nco_ctrl.set_nco(
-            1e6 * freq_in_mhz, self._rxcnco_id, adc_mode=True, fine_mode=False
-        )
-        self._rx_coarse_frequency = freq_in_mhz  # DEBUG seems not used right now
+        if USE_QUELWARE:
+            # TODO: 1e6でよい？
+            self._css.set_adc_cnco(self._group, self._rline, 1e6 * freq_in_mhz)
+            self._rx_coarse_frequency = freq_in_mhz  # DEBUG seems not used right now
+        else:
+            self._nco_ctrl.set_nco(
+                1e6 * freq_in_mhz, self._rxcnco_id, adc_mode=True, fine_mode=False
+            )
+            self._rx_coarse_frequency = freq_in_mhz  # DEBUG seems not used right now
 
+    # TODO: quelware
+    # QuBE_Control_LSIで実装してそれを呼ぶようにしたい
+    # self._rxcnco_idとは何か？
     def get_adc_coarse_frequency(self):
-        return self.static_get_adc_coarse_frequency(self._nco_ctrl, self._rxcnco_id)
+        if USE_QUELWARE:
+            #return self._css.get_adc_cnco(self._group, self._rline)
+            # FIXME: あとで直す。とりあえずrを固定で入れる
+            return self._css.get_adc_cnco(self._group, "r")
+        else:
+            return self.static_get_adc_coarse_frequency(self._nco_ctrl, self._rxcnco_id)
+
+    # # QuBE_Control_LSIに引越できなかった。。
+    # def set_adc_coarse_frequency(self, freq_in_mhz):
+    #     self.set_adc_coarse_frequency(freq_in_mhz)
+    #     self._rx_coarse_frequency = freq_in_mhz  # DEBUG seems not used right now
+
+    # # QuBE_Control_LSIに引越できなかった。。
+    # def get_adc_coarse_frequency(self):
+    #     return self.get_adc_coarse_frequency()
 
     def static_get_adc_coarse_frequency(self, nco_ctrl, ch):
         piw = self.static_get_adc_coarse_ftw(nco_ctrl, ch)
@@ -935,6 +994,7 @@ class QuBE_ReadoutLine(QuBE_ControlLine):
             res = nco_ctrl.read_value(0xA0A - i)
             piw = piw << 8 | res
         return piw
+
 
     def static_check_adc_coarse_frequency(self, freq_in_mhz):
         resolution = QSConstants.ADC_CNCO_RESOL
@@ -1078,6 +1138,27 @@ class QuBE_Server(DeviceServer):
     # | 1       | 1     | (1, 2)         | 8     | Ctrl     | Ctrl      |
     # | 1       | 0     | (1, 3)         | 7     | Ctrl     | Ctrl      |
 
+    # ADC用のrlineとrunit
+    # | ポート番号 | 受信LO番号 | MxFEの番号 | ADC番号, CNCO番号, FNCO番号 | (group, rline, runit)　 | キャプチャモジュール | キャプチャユニット |
+    # |----|---|---|---------|------------------------|----|---|
+    # | 0  | 0 | 0 | 3, 3, 5 | (0, r, 0)              | 1  | 4 |
+    # | 0  | 0 | 0 | 3, 3, 5 | (0, r, 1)              | 1  | 5 |
+    # | 0  | 0 | 0 | 3, 3, 5 | (0, r, 2)              | 1  | 6 |
+    # | 0  | 0 | 0 | 3, 3, 5 | (0, r, 3)              | 1  | 7 |
+    # | 5  | 1 | 0 | 2, 2, 4 | (0, m, 0)              | 1  | 4 |
+    # | 5  | 1 | 0 | 2, 2, 4 | (0, m, 1)              | 1  | 5 |
+    # | 5  | 1 | 0 | 2, 2, 4 | (0, m, 2)              | 1  | 6 |
+    # | 5  | 1 | 0 | 2, 2, 4 | (0, m, 3)              | 1  | 7 |
+    # | 7  | 7 | 1 | 3, 3, 5 | (0, r, 0)              | 0  | 0 |
+    # | 7  | 7 | 1 | 3, 3, 5 | (0, r, 1)              | 0  | 1 |
+    # | 7  | 7 | 1 | 3, 3, 5 | (0, r, 2)              | 0  | 2 |
+    # | 7  | 7 | 1 | 3, 3, 5 | (0, r, 3)              | 0  | 3 |
+    # | 12 | 6 | 1 | 2, 2, 4 | (0, m, 0)              | 0  | 0 |
+    # | 12 | 6 | 1 | 2, 2, 4 | (0, m, 1)              | 0  | 1 |
+    # | 12 | 6 | 1 | 2, 2, 4 | (0, m, 2)              | 0  | 2 |
+    # | 12 | 6 | 1 | 2, 2, 4 | (0, m, 3)              | 0  | 3 |
+
+
     # TODO: とりあえずコンバートテーブルを作るが後でPossibleLinksで登録する
     def convert_device_type_for_quelware(self, name, type) -> Quel1BoxType:
         if "ou" in name:
@@ -1112,7 +1193,7 @@ class QuBE_Server(DeviceServer):
         return None
 
     # TODO: PossibleLinksで登録するようになったらこれも不要
-    def get_port_from_name(self, name):
+    def get_dac_port_from_name(self, name):
         # 名前の後ろにポート番号がつく（16進数なので注意）
         # readout_cdの場合は、13
         # a: 10
@@ -1126,9 +1207,10 @@ class QuBE_Server(DeviceServer):
             # TODO: debug
             #print("port:", port)
             if port == "01":
-                # 01だとportは0らしい
+                # 0がDACのポートで、1がADCのポート
                 return 0
             elif port == "cd":
+                # d:13がDACのポートで、c:12がADCのポート
                 return 13
             elif port == "a":
                 return 10
@@ -1138,12 +1220,27 @@ class QuBE_Server(DeviceServer):
         except Exception:
             return -1
 
+    # TODO: PossibleLinksで登録するようになったらこれも不要
+    def get_adc_rline_from_name(self, name):
+        idx = name.rfind("_")
+        try:
+            port = name[idx + 1:]
+            if port == "01":
+                # 0がDACのポートで、1がADCのポート
+                return "r"
+            elif port == "cd":
+                # d:13がDACのポートで、c:12がADCのポート
+                return "m"
+            return ""
+        except Exception:
+            return ""
+
     # TODO: とりあえずコンバートテーブルを作るが後でPossibleLinksで登録する
     def convert_device_group_and_line(self, name, type):
         # TODO: QuEL-1 Type-Aは放置
-        matrix_a = {0:(0,0), 2:(0,1), 5:(0,2), 6:(0,3), 13:(1,0), 11:(1,1), 8:(1,3), 7:(1,2)}
-        matrix_b = {1:(0,0), 2:(0,1), 3:(0,2), 4:(0,3), 8:(1,0), 9:(1,1), 10:(1,3), 11:(1,2)}
-        port = self.get_port_from_name(name)
+        matrix_a = {0:(0,0), 2:(0,1), 5:(0,2), 6:(0,3), 13:(1,0), 11:(1,1), 8:(1,2), 7:(1,3)}
+        matrix_b = {1:(0,0), 2:(0,1), 3:(0,2), 4:(0,3), 8:(1,0), 9:(1,1), 11:(1,2), 10:(1,3)}
+        port = self.get_dac_port_from_name(name)
         # TODO: debug
         # print("port:", port)
         # print("type:", type)
@@ -1176,6 +1273,8 @@ class QuBE_Server(DeviceServer):
             # TODO: debug
             # print("group:", group)
             # print("line:", line)
+            rline = self.get_adc_rline_from_name(channel[QSConstants.CNL_NAME_TAG])
+            # TODO: simple_boxからportを取得するように変更したい
 
             args = name, role
             kw = dict(
@@ -1194,6 +1293,7 @@ class QuBE_Server(DeviceServer):
                 device_type=device_type,
                 group=group,
                 line=line,
+                rline=rline,
             )
 
             return (name, args, kw)
