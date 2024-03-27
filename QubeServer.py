@@ -578,9 +578,10 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
 
     def set_dac_fine_frequency(self, channel, freq_in_mhz):
         if USE_QUELWARE:
-            if freq_in_mhz < 0:
+            if freq_in_mhz < 0.0:
                 freq_in_mhz = QSConstants.NCO_SAMPLE_F + freq_in_mhz
             # TODO: 1e6でよい？
+            print("set_dac_fnco [freq_in_mhz]:", 1e6 * freq_in_mhz)
             self._css.set_dac_fnco(self._group, self._line, channel, 1e6 * freq_in_mhz)
             self._fine_frequencies[channel] = freq_in_mhz
         else:
