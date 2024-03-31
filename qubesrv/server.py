@@ -11,7 +11,6 @@ from labrad.units import Value
 from labrad.concurrent import future_to_deferred
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-
 from e7awgsw import (
     AwgCtrl,
     AWG,
@@ -33,8 +32,6 @@ from utils import pingger, QuBECaptureCtrl
 #
 # QUBE SERVER
 #
-
-
 class QuBE_Server(DeviceServer):
     name = QSConstants.SRVNAME
     deviceWrappers = {

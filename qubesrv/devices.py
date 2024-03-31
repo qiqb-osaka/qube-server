@@ -17,8 +17,6 @@ from quel_ic_config import Quel1Box
 
 from constants import QSConstants, QSMessage
 
-USE_QUELWARE = True
-
 ############################################################
 #
 # DEVICE WRAPPERS
@@ -37,8 +35,6 @@ USE_QUELWARE = True
 #                            |                          /      .
 #                            +-- QuBE_Device_debug_otasuke ----+- QuBE_ControlLine_debug_otasuke
 #
-
-
 class QuBE_DeviceBase(DeviceWrapper):
     @inlineCallbacks
     def connect(self, *args, **kw):  # @inlineCallbacks
@@ -254,20 +250,9 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
             self._line = kw["line"]
             self._rline = kw["rline"]
 
-            # TODO: if USE_QUELWARE == False:
-            self._nco_ctrl = kw["nco_device"]
-            self._lo_ctrl = kw["lo_device"]
-            self._mix_ctrl = kw["mix_device"]
-
-            self._cnco_id = kw["cnco_id"]
-            self._fnco_ids = kw["fnco_id"]
-            self._fnco_chs = len(self._fnco_ids)
-            self._mix_usb_lsb = kw["mix_sb"]
-
             #print("start _lo_frequency")
-            self._lo_frequency = (
-                self.get_lo_frequency()
-            )  # DEBUG: for buffered operation, not used.
+            # DEBUG: for buffered operation, not used.
+            self._lo_frequency = self.get_lo_frequency()
             #print("start get_dac_coarse_frequency")
             self._coarse_frequency = self.get_dac_coarse_frequency()
             # DEBUG: for buffered operation, partly used.
@@ -285,165 +270,105 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
             print(sys._getframe().f_code.co_name, e)
 
         if self.__initialized:
+            # FIXME: あとで消す
+            self._fnco_ids = kw["fnco_id"]
+            self._fnco_chs = len(self._fnco_ids)
             self._fine_frequencies = [0 for i in range(self._fnco_chs)]
         yield
 
     def get_lo_frequency(self):
-        if USE_QUELWARE:
-            return self._css.get_lo_multiplier(self._group, self._line) * 100
-        else:
-            return self._lo_ctrl.read_freq_100M() * 100
+        return self._css.get_lo_multiplier(self._group, self._line) * 100
 
     def set_lo_frequency(self, freq_in_mhz):
-        if USE_QUELWARE:
-            return self._css.set_lo_multiplier(self._group, self._line, int(freq_in_mhz // 100))
-        else:
-            return self._lo_ctrl.write_freq_100M(int(freq_in_mhz // 100))
+        return self._css.set_lo_multiplier(self._group, self._line, int(freq_in_mhz // 100))
 
     def get_mix_sideband(self):
-        if USE_QUELWARE:
-            resp = self._css.get_sideband(self._group, self._line)
-            if resp == "U":
-                return QSConstants.CNL_MXUSB_VAL
-            else:
-                return QSConstants.CNL_MXLSB_VAL
+        resp = self._css.get_sideband(self._group, self._line)
+        if resp == "U":
+            return QSConstants.CNL_MXUSB_VAL
         else:
-            resp = self._mix_ctrl.read_mode() & 0x0400
-            if 0x400 == resp:
-                return QSConstants.CNL_MXLSB_VAL
-            else:
-                return QSConstants.CNL_MXUSB_VAL
+            return QSConstants.CNL_MXLSB_VAL
 
     def set_mix_sideband(self, sideband: str):
-        if USE_QUELWARE:
-            if sideband == QSConstants.CNL_MXUSB_VAL:
-                qwsb = "U"
-            else:
-                qwsb = "L"
-            self._css.set_sideband(self._group, self._line, qwsb)
-            self._mix_usb_lsb = sideband
+        if sideband == QSConstants.CNL_MXUSB_VAL:
+            qwsb = "U"
         else:
-            if QSConstants.CNL_MXUSB_VAL == sideband:
-                self._mix_ctrl.set_usb()
-            elif QSConstants.CNL_MXLSB_VAL == sideband:
-                self._mix_ctrl.set_lsb()
-            else:
-                return
-            self._mix_usb_lsb = sideband
+            qwsb = "L"
+        self._css.set_sideband(self._group, self._line, qwsb)
+        #self._mix_usb_lsb = sideband
 
     # TODO: NCO
     def get_dac_coarse_frequency(self):
-        if USE_QUELWARE:
-            return self._css.get_dac_cnco(self._group, self._line)
-        else:
-            return self.static_get_dac_coarse_frequency(self._nco_ctrl, self._cnco_id)
+        return self._css.get_dac_cnco(self._group, self._line)
 
     def set_dac_coarse_frequency(self, freq_in_mhz):
-        if USE_QUELWARE:
-            # TODO: 1e6でよい？
-            self._css.set_dac_cnco(self._group, self._line, 1e6 * freq_in_mhz)
-            self._coarse_frequency = freq_in_mhz
-        else:
-            self._nco_ctrl.set_nco(
-                1e6 * freq_in_mhz, self._cnco_id, adc_mode=False, fine_mode=False
-            )
-            self._coarse_frequency = freq_in_mhz
+        self._css.set_dac_cnco(self._group, self._line, 1e6 * freq_in_mhz)
+        self._coarse_frequency = freq_in_mhz
 
     def get_dac_fine_frequency(self, channel):
-        if USE_QUELWARE:
-            return self._css.get_dac_fnco(self._group, self._line, channel)
-        else:
-            return self.static_get_dac_fine_frequency(
-                self._nco_ctrl, self._fnco_ids[channel]
-            )
+        return self._css.get_dac_fnco(self._group, self._line, channel)
 
     def set_dac_fine_frequency(self, channel, freq_in_mhz):
-        if USE_QUELWARE:
-            print("set_dac_fnco [freq_in_mhz] before:", 1e6 * freq_in_mhz)
-            if freq_in_mhz < 0:
-               freq_in_mhz = QSConstants.NCO_SAMPLE_F + freq_in_mhz
-            # TODO: 1e6でよい？
-            print("set_dac_fnco [freq_in_mhz] changed:", 1e6 * freq_in_mhz)
-            self._css.set_dac_fnco(self._group, self._line, channel, 1e6 * freq_in_mhz)
-            self._fine_frequencies[channel] = freq_in_mhz
-        else:
-            print("set_dac_fnco [freq_in_mhz] old before:", 1e6 * freq_in_mhz)
-            if freq_in_mhz < 0:
-                freq_in_mhz = QSConstants.NCO_SAMPLE_F + freq_in_mhz
-            # TODO: debug
-            print("set_dac_fnco [freq_in_mhz] old:", 1e6 * freq_in_mhz)
-            self._nco_ctrl.set_nco(
-                1e6 * freq_in_mhz, self._fnco_ids[channel], adc_mode=False, fine_mode=True
-            )
-            self._fine_frequencies[channel] = freq_in_mhz
+        print("set_dac_fnco [freq_in_mhz] before:", 1e6 * freq_in_mhz)
+        if freq_in_mhz < 0:
+            freq_in_mhz = QSConstants.NCO_SAMPLE_F + freq_in_mhz
+        print("set_dac_fnco [freq_in_mhz] changed:", 1e6 * freq_in_mhz)
+        self._css.set_dac_fnco(self._group, self._line, channel, 1e6 * freq_in_mhz)
+        self._fine_frequencies[channel] = freq_in_mhz
 
 
+    # def static_get_dac_coarse_frequency(self, nco_ctrl, ch):
+    #     ftw = self.static_get_dac_coarse_ftw(nco_ctrl, ch)
+    #     return QSConstants.DAC_SAMPLE_R / (2**QSConstants.DAQ_CNCO_BITS) * ftw
 
-    def static_get_dac_coarse_frequency(self, nco_ctrl, ch):
-        ftw = self.static_get_dac_coarse_ftw(nco_ctrl, ch)
-        return QSConstants.DAC_SAMPLE_R / (2**QSConstants.DAQ_CNCO_BITS) * ftw
+    # def static_get_dac_coarse_ftw(self, nco_ctrl, ch):
+    #     page = nco_ctrl.read_value(0x1B) & 0xFF  # dac mainpath page select
+    #     nco_ctrl.write_value(0x1B, page & 0xF0 | (1 << ch) & 0x0F)
+    #     ftw = 0  # ftw stands for freuqyency tuning word
+    #     for i in range(6):  # freq is f_DAC/(2**48)*(ftw)
+    #         res = nco_ctrl.read_value(0x1D0 - i)
+    #         ftw = ftw << 8 | res
+    #     return ftw
 
-    def static_get_dac_coarse_ftw(self, nco_ctrl, ch):
-        page = nco_ctrl.read_value(0x1B) & 0xFF  # dac mainpath page select
-        nco_ctrl.write_value(0x1B, page & 0xF0 | (1 << ch) & 0x0F)
-        ftw = 0  # ftw stands for freuqyency tuning word
-        for i in range(6):  # freq is f_DAC/(2**48)*(ftw)
-            res = nco_ctrl.read_value(0x1D0 - i)
-            ftw = ftw << 8 | res
-        return ftw
+    # def static_get_dac_fine_frequency(self, nco_ctrl, ch):
+    #     ftw = self.static_get_dac_fine_ftw(nco_ctrl, ch)
+    #     return QSConstants.NCO_SAMPLE_F / (2**QSConstants.DAQ_CNCO_BITS) * ftw
 
-    def static_get_dac_fine_frequency(self, nco_ctrl, ch):
-        ftw = self.static_get_dac_fine_ftw(nco_ctrl, ch)
-        return QSConstants.NCO_SAMPLE_F / (2**QSConstants.DAQ_CNCO_BITS) * ftw
+    # def static_get_dac_fine_ftw(self, nco_ctrl, ch):
+    #     page = nco_ctrl.read_value(0x1C) & 0xFF
+    #     nco_ctrl.write_value(0x1C, (1 << ch) & 0xFF)
+    #     ftw = 0
+    #     for i in range(6):
+    #         res = nco_ctrl.read_value(0x1A7 - i)
+    #         ftw = ftw << 8 | res
+    #     return ftw
 
-    def static_get_dac_fine_ftw(self, nco_ctrl, ch):
-        page = nco_ctrl.read_value(0x1C) & 0xFF
-        nco_ctrl.write_value(0x1C, (1 << ch) & 0xFF)
-        ftw = 0
-        for i in range(6):
-            res = nco_ctrl.read_value(0x1A7 - i)
-            ftw = ftw << 8 | res
-        return ftw
+    # def static_check_lo_frequency(self, freq_in_mhz):
+    #     resolution = QSConstants.DAQ_LO_RESOL
+    #     return self.static_check_value(freq_in_mhz, resolution)
 
+    # def static_check_dac_coarse_frequency(self, freq_in_mhz):
+    #     resolution = QSConstants.DAC_CNCO_RESOL
+    #     return self.static_check_value(freq_in_mhz, resolution)
 
-
-
-    def static_check_lo_frequency(self, freq_in_mhz):
-        resolution = QSConstants.DAQ_LO_RESOL
-        return self.static_check_value(freq_in_mhz, resolution)
-
-    def static_check_dac_coarse_frequency(self, freq_in_mhz):
-        resolution = QSConstants.DAC_CNCO_RESOL
-        return self.static_check_value(freq_in_mhz, resolution)
-
-    def static_check_dac_fine_frequency(self, freq_in_mhz):
-        resolution = QSConstants.DAC_FNCO_RESOL
-        resp = self.static_check_value(freq_in_mhz, resolution, include_zero=True)
-        if resp:
-            resp = (
-                -QSConstants.NCO_SAMPLE_F < freq_in_mhz
-                and freq_in_mhz < QSConstants.NCO_SAMPLE_F
-            )
-        return resp
+    # def static_check_dac_fine_frequency(self, freq_in_mhz):
+    #     resolution = QSConstants.DAC_FNCO_RESOL
+    #     resp = self.static_check_value(freq_in_mhz, resolution, include_zero=True)
+    #     if resp:
+    #         resp = (
+    #             -QSConstants.NCO_SAMPLE_F < freq_in_mhz
+    #             and freq_in_mhz < QSConstants.NCO_SAMPLE_F
+    #         )
+    #     return resp
 
     # # ADC
     # def set_adc_coarse_frequency(self, freq_in_mhz):
-    #     if USE_QUELWARE:
-    #         # TODO: 1e6でよい？
     #         self._css.set_adc_cnco(self._group, self._line, 1e6 * freq_in_mhz)
-    #         self._rx_coarse_frequency = freq_in_mhz  # DEBUG seems not used right now
-    #     else:
-    #         self._nco_ctrl.set_nco(
-    #             1e6 * freq_in_mhz, self._rxcnco_id, adc_mode=True, fine_mode=False
-    #         )
     #         self._rx_coarse_frequency = freq_in_mhz  # DEBUG seems not used right now
 
     # # self._rxcnco_idとは何か？
     # def get_adc_coarse_frequency(self):
-    #     if USE_QUELWARE:
     #         return self._css.get_adc_cnco(self._group, self._line)
-    #     else:
-    #         return self.static_get_adc_coarse_frequency(self._nco_ctrl, self._rxcnco_id)
 
     # def static_get_adc_coarse_frequency(self, nco_ctrl, ch):
     #     piw = self.static_get_adc_coarse_ftw(nco_ctrl, ch)
@@ -469,7 +394,7 @@ class QuBE_ReadoutLine(QuBE_ControlLine):
             self._cap_ctrl = kw["cap_ctrl"]
             self._cap_mod_id = kw["cap_mod_id"]
             self._cap_unit = kw["capture_units"]
-            self._rxcnco_id = kw["cdnco_id"]
+            #self._rxcnco_id = kw["cdnco_id"]
 
             print("QuBE_ReadoutLine kw:", kw)
             # TODO: debug
@@ -738,26 +663,16 @@ class QuBE_ReadoutLine(QuBE_ControlLine):
     # TODO: quelware
     # QuBE_Control_LSIで実装してそれを呼ぶようにしたい
     def set_adc_coarse_frequency(self, freq_in_mhz):
-        if USE_QUELWARE:
-            # TODO: 1e6でよい？
-            self._css.set_adc_cnco(self._group, self._rline, 1e6 * freq_in_mhz)
-            self._rx_coarse_frequency = freq_in_mhz  # DEBUG seems not used right now
-        else:
-            self._nco_ctrl.set_nco(
-                1e6 * freq_in_mhz, self._rxcnco_id, adc_mode=True, fine_mode=False
-            )
-            self._rx_coarse_frequency = freq_in_mhz  # DEBUG seems not used right now
+        self._css.set_adc_cnco(self._group, self._rline, 1e6 * freq_in_mhz)
+        self._rx_coarse_frequency = freq_in_mhz  # DEBUG seems not used right now
 
     # TODO: quelware
     # QuBE_Control_LSIで実装してそれを呼ぶようにしたい
     # self._rxcnco_idとは何か？
     def get_adc_coarse_frequency(self):
-        if USE_QUELWARE:
-            #return self._css.get_adc_cnco(self._group, self._rline)
-            # FIXME: あとで直す。とりあえずrを固定で入れる
-            return self._css.get_adc_cnco(self._group, "r")
-        else:
-            return self.static_get_adc_coarse_frequency(self._nco_ctrl, self._rxcnco_id)
+        #return self._css.get_adc_cnco(self._group, self._rline)
+        # FIXME: あとで直す。とりあえずrを固定で入れる
+        return self._css.get_adc_cnco(self._group, "r")
 
     # # QuBE_Control_LSIに引越できなかった。。
     # def set_adc_coarse_frequency(self, freq_in_mhz):
@@ -768,60 +683,60 @@ class QuBE_ReadoutLine(QuBE_ControlLine):
     # def get_adc_coarse_frequency(self):
     #     return self.get_adc_coarse_frequency()
 
-    def static_get_adc_coarse_frequency(self, nco_ctrl, ch):
-        piw = self.static_get_adc_coarse_ftw(nco_ctrl, ch)
-        return QSConstants.ADC_SAMPLE_R / (2**QSConstants.DAQ_CNCO_BITS) * piw
+    # def static_get_adc_coarse_frequency(self, nco_ctrl, ch):
+    #     piw = self.static_get_adc_coarse_ftw(nco_ctrl, ch)
+    #     return QSConstants.ADC_SAMPLE_R / (2**QSConstants.DAQ_CNCO_BITS) * piw
 
-    def static_get_adc_coarse_ftw(self, nco_ctrl, ch):
-        page = nco_ctrl.read_value(0x18) & 0xFF  # dac mainpath page select
-        nco_ctrl.write_value(0x18, page & 0x0F | (16 << ch) & 0xF0)
-        piw = 0  # piw stands for phase incremental word
-        for i in range(6):  # freq is f_ADC/(2**48)*(piw)
-            res = nco_ctrl.read_value(0xA0A - i)
-            piw = piw << 8 | res
-        return piw
+    # def static_get_adc_coarse_ftw(self, nco_ctrl, ch):
+    #     page = nco_ctrl.read_value(0x18) & 0xFF  # dac mainpath page select
+    #     nco_ctrl.write_value(0x18, page & 0x0F | (16 << ch) & 0xF0)
+    #     piw = 0  # piw stands for phase incremental word
+    #     for i in range(6):  # freq is f_ADC/(2**48)*(piw)
+    #         res = nco_ctrl.read_value(0xA0A - i)
+    #         piw = piw << 8 | res
+    #     return piw
 
 
-    def static_check_adc_coarse_frequency(self, freq_in_mhz):
-        resolution = QSConstants.ADC_CNCO_RESOL
-        return self.static_check_value(freq_in_mhz, resolution)
+    # def static_check_adc_coarse_frequency(self, freq_in_mhz):
+    #     resolution = QSConstants.ADC_CNCO_RESOL
+    #     return self.static_check_value(freq_in_mhz, resolution)
 
-    def static_check_mux_channel_range(self, mux):
-        return True if 0 <= mux and mux < QSConstants.ACQ_MULP else False
+    # def static_check_mux_channel_range(self, mux):
+    #     return True if 0 <= mux and mux < QSConstants.ACQ_MULP else False
 
-    def static_check_acquisition_windows(self, list_of_windows):
-        def check_value(w):
-            return False if 0 != w % QSConstants.ACQ_CAPW_RESOL else True
+    # def static_check_acquisition_windows(self, list_of_windows):
+    #     def check_value(w):
+    #         return False if 0 != w % QSConstants.ACQ_CAPW_RESOL else True
 
-        def check_duration(start, end):
-            return (
-                False
-                if start > end or end - start > QSConstants.ACQ_MAXWINDOW
-                else True
-            )
+    #     def check_duration(start, end):
+    #         return (
+    #             False
+    #             if start > end or end - start > QSConstants.ACQ_MAXWINDOW
+    #             else True
+    #         )
 
-        if 0 != list_of_windows[0][0] % QSConstants.ACQ_CAST_RESOL:
-            return False
+    #     if 0 != list_of_windows[0][0] % QSConstants.ACQ_CAST_RESOL:
+    #         return False
 
-        for _s, _e in list_of_windows:
-            if not check_value(_s) or not check_value(_e) or not check_duration(_s, _e):
-                return False
+    #     for _s, _e in list_of_windows:
+    #         if not check_value(_s) or not check_value(_e) or not check_duration(_s, _e):
+    #             return False
 
-        return True
+    #     return True
 
-    def static_check_acquisition_fir_coefs(self, coeffs):
-        length = len(coeffs)
+    # def static_check_acquisition_fir_coefs(self, coeffs):
+    #     length = len(coeffs)
 
-        resp = QSConstants.ACQ_MAX_FCOEF >= length
-        if resp:
-            resp = 1.0 > np.max(np.abs(coeffs))
-        return resp
+    #     resp = QSConstants.ACQ_MAX_FCOEF >= length
+    #     if resp:
+    #         resp = 1.0 > np.max(np.abs(coeffs))
+    #     return resp
 
-    def static_check_acquisition_window_coefs(self, coeffs):
-        length = len(coeffs)
+    # def static_check_acquisition_window_coefs(self, coeffs):
+    #     length = len(coeffs)
 
-        resp = QSConstants.ACQ_MAX_WCOEF >= length
-        if resp:
-            resp = 1.0 > np.max(np.abs(coeffs))
-        return resp
+    #     resp = QSConstants.ACQ_MAX_WCOEF >= length
+    #     if resp:
+    #         resp = 1.0 > np.max(np.abs(coeffs))
+    #     return resp
 
