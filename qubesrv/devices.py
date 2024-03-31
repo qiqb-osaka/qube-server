@@ -309,10 +309,11 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
         return self._css.get_dac_fnco(self._group, self._line, channel)
 
     def set_dac_fine_frequency(self, channel, freq_in_mhz):
-        print("set_dac_fnco [freq_in_mhz] before:", 1e6 * freq_in_mhz)
-        if freq_in_mhz < 0:
-            freq_in_mhz = QSConstants.NCO_SAMPLE_F + freq_in_mhz
-        print("set_dac_fnco [freq_in_mhz] changed:", 1e6 * freq_in_mhz)
+        # TODO: debug
+        # print("set_dac_fnco [freq_in_mhz] before:", 1e6 * freq_in_mhz)
+        # if freq_in_mhz < 0:
+        #     freq_in_mhz = QSConstants.NCO_SAMPLE_F + freq_in_mhz
+        # print("set_dac_fnco [freq_in_mhz] changed:", 1e6 * freq_in_mhz)
         self._css.set_dac_fnco(self._group, self._line, channel, 1e6 * freq_in_mhz)
         self._fine_frequencies[channel] = freq_in_mhz
 
@@ -343,23 +344,23 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
     #         ftw = ftw << 8 | res
     #     return ftw
 
-    # def static_check_lo_frequency(self, freq_in_mhz):
-    #     resolution = QSConstants.DAQ_LO_RESOL
-    #     return self.static_check_value(freq_in_mhz, resolution)
+    def static_check_lo_frequency(self, freq_in_mhz):
+        resolution = QSConstants.DAQ_LO_RESOL
+        return self.static_check_value(freq_in_mhz, resolution)
 
-    # def static_check_dac_coarse_frequency(self, freq_in_mhz):
-    #     resolution = QSConstants.DAC_CNCO_RESOL
-    #     return self.static_check_value(freq_in_mhz, resolution)
+    def static_check_dac_coarse_frequency(self, freq_in_mhz):
+        resolution = QSConstants.DAC_CNCO_RESOL
+        return self.static_check_value(freq_in_mhz, resolution)
 
-    # def static_check_dac_fine_frequency(self, freq_in_mhz):
-    #     resolution = QSConstants.DAC_FNCO_RESOL
-    #     resp = self.static_check_value(freq_in_mhz, resolution, include_zero=True)
-    #     if resp:
-    #         resp = (
-    #             -QSConstants.NCO_SAMPLE_F < freq_in_mhz
-    #             and freq_in_mhz < QSConstants.NCO_SAMPLE_F
-    #         )
-    #     return resp
+    def static_check_dac_fine_frequency(self, freq_in_mhz):
+        resolution = QSConstants.DAC_FNCO_RESOL
+        resp = self.static_check_value(freq_in_mhz, resolution, include_zero=True)
+        if resp:
+            resp = (
+                -QSConstants.NCO_SAMPLE_F < freq_in_mhz
+                and freq_in_mhz < QSConstants.NCO_SAMPLE_F
+            )
+        return resp
 
     # # ADC
     # def set_adc_coarse_frequency(self, freq_in_mhz):
@@ -674,15 +675,6 @@ class QuBE_ReadoutLine(QuBE_ControlLine):
         # FIXME: あとで直す。とりあえずrを固定で入れる
         return self._css.get_adc_cnco(self._group, "r")
 
-    # # QuBE_Control_LSIに引越できなかった。。
-    # def set_adc_coarse_frequency(self, freq_in_mhz):
-    #     self.set_adc_coarse_frequency(freq_in_mhz)
-    #     self._rx_coarse_frequency = freq_in_mhz  # DEBUG seems not used right now
-
-    # # QuBE_Control_LSIに引越できなかった。。
-    # def get_adc_coarse_frequency(self):
-    #     return self.get_adc_coarse_frequency()
-
     # def static_get_adc_coarse_frequency(self, nco_ctrl, ch):
     #     piw = self.static_get_adc_coarse_ftw(nco_ctrl, ch)
     #     return QSConstants.ADC_SAMPLE_R / (2**QSConstants.DAQ_CNCO_BITS) * piw
@@ -697,46 +689,46 @@ class QuBE_ReadoutLine(QuBE_ControlLine):
     #     return piw
 
 
-    # def static_check_adc_coarse_frequency(self, freq_in_mhz):
-    #     resolution = QSConstants.ADC_CNCO_RESOL
-    #     return self.static_check_value(freq_in_mhz, resolution)
+    def static_check_adc_coarse_frequency(self, freq_in_mhz):
+        resolution = QSConstants.ADC_CNCO_RESOL
+        return self.static_check_value(freq_in_mhz, resolution)
 
-    # def static_check_mux_channel_range(self, mux):
-    #     return True if 0 <= mux and mux < QSConstants.ACQ_MULP else False
+    def static_check_mux_channel_range(self, mux):
+        return True if 0 <= mux and mux < QSConstants.ACQ_MULP else False
 
-    # def static_check_acquisition_windows(self, list_of_windows):
-    #     def check_value(w):
-    #         return False if 0 != w % QSConstants.ACQ_CAPW_RESOL else True
+    def static_check_acquisition_windows(self, list_of_windows):
+        def check_value(w):
+            return False if 0 != w % QSConstants.ACQ_CAPW_RESOL else True
 
-    #     def check_duration(start, end):
-    #         return (
-    #             False
-    #             if start > end or end - start > QSConstants.ACQ_MAXWINDOW
-    #             else True
-    #         )
+        def check_duration(start, end):
+            return (
+                False
+                if start > end or end - start > QSConstants.ACQ_MAXWINDOW
+                else True
+            )
 
-    #     if 0 != list_of_windows[0][0] % QSConstants.ACQ_CAST_RESOL:
-    #         return False
+        if 0 != list_of_windows[0][0] % QSConstants.ACQ_CAST_RESOL:
+            return False
 
-    #     for _s, _e in list_of_windows:
-    #         if not check_value(_s) or not check_value(_e) or not check_duration(_s, _e):
-    #             return False
+        for _s, _e in list_of_windows:
+            if not check_value(_s) or not check_value(_e) or not check_duration(_s, _e):
+                return False
 
-    #     return True
+        return True
 
-    # def static_check_acquisition_fir_coefs(self, coeffs):
-    #     length = len(coeffs)
+    def static_check_acquisition_fir_coefs(self, coeffs):
+        length = len(coeffs)
 
-    #     resp = QSConstants.ACQ_MAX_FCOEF >= length
-    #     if resp:
-    #         resp = 1.0 > np.max(np.abs(coeffs))
-    #     return resp
+        resp = QSConstants.ACQ_MAX_FCOEF >= length
+        if resp:
+            resp = 1.0 > np.max(np.abs(coeffs))
+        return resp
 
-    # def static_check_acquisition_window_coefs(self, coeffs):
-    #     length = len(coeffs)
+    def static_check_acquisition_window_coefs(self, coeffs):
+        length = len(coeffs)
 
-    #     resp = QSConstants.ACQ_MAX_WCOEF >= length
-    #     if resp:
-    #         resp = 1.0 > np.max(np.abs(coeffs))
-    #     return resp
+        resp = QSConstants.ACQ_MAX_WCOEF >= length
+        if resp:
+            resp = 1.0 > np.max(np.abs(coeffs))
+        return resp
 
