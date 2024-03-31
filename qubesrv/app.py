@@ -12,8 +12,9 @@ from labrad.units import ns, us
 #from plotly import graph_objects as go
 
 from constants import QSConstants
-from server import QuBE_Server, QuBE_Server_debug_otasuke
+from server import QuBE_Server
 from manager import QuBE_Manager_Server
+from helper import QuBE_Server_debug_otasuke
 
 #from manager import QuBE_Manager
 
@@ -212,5 +213,5 @@ if __name__ == "__main__":
     #  print sys.argv
     #  if sys.argv:
     #    del sys.argv[1:]
-    print("tmori dev mode3")
+    print("tmori dev mode4")
     util.runServer(__server__)
