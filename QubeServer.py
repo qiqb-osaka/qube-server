@@ -80,7 +80,9 @@ class QSConstants:
     THREAD_MAX_WORKERS = 32
     DAQ_MAXLEN = 199936  # nano-seconds -> 24,992 AWG Word
     DAC_SAMPLE_R = 12000  # MHz
+    # TODO: NCO_SAMPLE_FとCDUC6
     NCO_SAMPLE_F = 2000  # MHz, NCO frequency at main data path
+    #NCO_SAMPLE_F = 1000 # MHz, NCO frequency at main data path
     ADC_SAMPLE_R = 6000  # MHz
     DACBB_SAMPLE_R = 500  # MHz, baseband sampling frequency
     ADCBB_SAMPLE_R = 500  # MHz, baseband sampling frequency
@@ -578,15 +580,19 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
 
     def set_dac_fine_frequency(self, channel, freq_in_mhz):
         if USE_QUELWARE:
-            if freq_in_mhz < 0.0:
-                freq_in_mhz = QSConstants.NCO_SAMPLE_F + freq_in_mhz
+            print("set_dac_fnco [freq_in_mhz] before:", 1e6 * freq_in_mhz)
+            if freq_in_mhz < 0:
+               freq_in_mhz = QSConstants.NCO_SAMPLE_F + freq_in_mhz
             # TODO: 1e6でよい？
-            print("set_dac_fnco [freq_in_mhz]:", 1e6 * freq_in_mhz)
+            print("set_dac_fnco [freq_in_mhz] changed:", 1e6 * freq_in_mhz)
             self._css.set_dac_fnco(self._group, self._line, channel, 1e6 * freq_in_mhz)
             self._fine_frequencies[channel] = freq_in_mhz
         else:
+            print("set_dac_fnco [freq_in_mhz] old before:", 1e6 * freq_in_mhz)
             if freq_in_mhz < 0:
                 freq_in_mhz = QSConstants.NCO_SAMPLE_F + freq_in_mhz
+            # TODO: debug
+            print("set_dac_fnco [freq_in_mhz] old:", 1e6 * freq_in_mhz)
             self._nco_ctrl.set_nco(
                 1e6 * freq_in_mhz, self._fnco_ids[channel], adc_mode=False, fine_mode=True
             )
