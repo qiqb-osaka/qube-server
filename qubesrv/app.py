@@ -9,10 +9,12 @@ from labrad import types as T, util
 from labrad.units import ns, us
 
 
-from plotly import graph_objects as go
+#from plotly import graph_objects as go
 
 from constants import QSConstants
-from server import QuBE_Server, QuBE_Manager_Server, QuBE_Server_debug_otasuke  
+from server import QuBE_Server, QuBE_Server_debug_otasuke
+from manager import QuBE_Manager_Server
+
 #from manager import QuBE_Manager
 
 ############################################################
@@ -141,35 +143,35 @@ def usage():
     dat = qs.download_waveform([mux_chan])
     cxn.disconnect()
 
-    data_view = False
-    if data_view:
-        mx, length = dat.shape
-        tdat = dat[0].reshape((length // 10, 10))
-        dat = np.sum(tdat, axis=1) / 10.0
-        e = np.exp(-1j * 2 * np.pi * (3.41796875 / 62.5) * np.arange(length))
-        # You can apply fft if need
-        #  dat[0]=np.fft.fft(dat[0])
-        graph_data = []
-        graph_data.append(go.Scatter(x=np.arange(length), y=np.real(dat), name="real"))
-        graph_data.append(go.Scatter(x=np.arange(length), y=np.imag(dat), name="imag"))
-        # graph_data.append(
-        #  go.Scatter ( x   = np.arange(length),
-        #               y   = np.real(dat[1]),
-        #               name= "real")
-        # )
-        # graph_data.append(
-        #  go.Scatter ( x   = np.arange(length),
-        #               y   = np.imag(dat[1]),
-        #               name= "imag")
-        # )
-        layout = go.Layout(
-            title="Spur in RX",
-            xaxis=dict(title="Frequency (GHz)", dtick=0.05),
-            yaxis=dict(title="Dataset", dtick=20),
-        )
+    # data_view = False
+    # if data_view:
+    #     mx, length = dat.shape
+    #     tdat = dat[0].reshape((length // 10, 10))
+    #     dat = np.sum(tdat, axis=1) / 10.0
+    #     e = np.exp(-1j * 2 * np.pi * (3.41796875 / 62.5) * np.arange(length))
+    #     # You can apply fft if need
+    #     #  dat[0]=np.fft.fft(dat[0])
+    #     graph_data = []
+    #     graph_data.append(go.Scatter(x=np.arange(length), y=np.real(dat), name="real"))
+    #     graph_data.append(go.Scatter(x=np.arange(length), y=np.imag(dat), name="imag"))
+    #     # graph_data.append(
+    #     #  go.Scatter ( x   = np.arange(length),
+    #     #               y   = np.real(dat[1]),
+    #     #               name= "real")
+    #     # )
+    #     # graph_data.append(
+    #     #  go.Scatter ( x   = np.arange(length),
+    #     #               y   = np.imag(dat[1]),
+    #     #               name= "imag")
+    #     # )
+    #     layout = go.Layout(
+    #         title="Spur in RX",
+    #         xaxis=dict(title="Frequency (GHz)", dtick=0.05),
+    #         yaxis=dict(title="Dataset", dtick=20),
+    #     )
 
-        fig = go.Figure(graph_data)
-        fig.write_html("1.html")
+    #     fig = go.Figure(graph_data)
+    #     fig.write_html("1.html")
     return dat
 
 
