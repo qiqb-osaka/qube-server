@@ -355,6 +355,7 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
     def static_check_dac_fine_frequency(self, freq_in_mhz):
         resolution = QSConstants.DAC_FNCO_RESOL
         resp = self.static_check_value(freq_in_mhz, resolution, include_zero=True)
+        # FIXME: 多分ここのチェックがいらないはず
         if resp:
             resp = (
                 -QSConstants.NCO_SAMPLE_F < freq_in_mhz
