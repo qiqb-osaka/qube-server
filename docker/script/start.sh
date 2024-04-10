@@ -40,11 +40,5 @@ python $LIB_PATH/qubesrv/app.py >& $HOME/log/qube-server.log &
 #python $LIB_PATH/QubeServer.py >& $HOME/log/qube-server.log &
 #python $LIB_PATH/qube-calib/QubeServer.py >& $HOME/log/qube-server.log &
 
-# start qube manager
-#QUBE_SERVER="QuBE Manager" \
-#UDP_RW_BIND_ADDRESS="10.0.0.3" \
-#python $LIB_PATH/QubeServer.py >& $HOME/log/qube-manager.log &
-#python $LIB_PATH/qube-calib/QubeServer.py >& $HOME/log/qube-manager.log &
-
 # use 'wait' command to make the script pause and keep the container running
 wait $labrad_pid

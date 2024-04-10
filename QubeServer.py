@@ -59,7 +59,7 @@ from labrad.concurrent import future_to_deferred
 
 from quel_ic_config import Quel1Box, Quel1BoxType
 
-USE_QUELWARE = True
+USE_QUELWARE = False
 
 ############################################################
 #

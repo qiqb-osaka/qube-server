@@ -299,14 +299,14 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
 
     # TODO: NCO
     def get_dac_coarse_frequency(self):
-        return self._css.get_dac_cnco(self._group, self._line)
+        return self._css.get_dac_cnco(self._group, self._line) // 1e6
 
     def set_dac_coarse_frequency(self, freq_in_mhz):
         self._css.set_dac_cnco(self._group, self._line, 1e6 * freq_in_mhz)
         self._coarse_frequency = freq_in_mhz
 
     def get_dac_fine_frequency(self, channel):
-        return self._css.get_dac_fnco(self._group, self._line, channel)
+        return self._css.get_dac_fnco(self._group, self._line, channel) // 1e6
 
     def set_dac_fine_frequency(self, channel, freq_in_mhz):
         # TODO: debug
@@ -357,6 +357,7 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
         resp = self.static_check_value(freq_in_mhz, resolution, include_zero=True)
         # FIXME: 多分ここのチェックがいらないはず
         if resp:
+            print("static_check_dac_fine_frequency: freq_in_mhz:", freq_in_mhz)
             resp = (
                 -QSConstants.NCO_SAMPLE_F < freq_in_mhz
                 and freq_in_mhz < QSConstants.NCO_SAMPLE_F
@@ -674,7 +675,7 @@ class QuBE_ReadoutLine(QuBE_ControlLine):
     def get_adc_coarse_frequency(self):
         #return self._css.get_adc_cnco(self._group, self._rline)
         # FIXME: あとで直す。とりあえずrを固定で入れる
-        return self._css.get_adc_cnco(self._group, "r")
+        return self._css.get_adc_cnco(self._group, "r") // 1e6
 
     # def static_get_adc_coarse_frequency(self, nco_ctrl, ch):
     #     piw = self.static_get_adc_coarse_ftw(nco_ctrl, ch)

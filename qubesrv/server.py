@@ -1189,7 +1189,7 @@ class QuBE_Server(DeviceServer):
         return True
 
     @setting(400, "Frequency Local", frequency=["v[Hz]"], returns=["v[Hz]"])
-    def local_frequency(self, c, frequency=None):
+    def frequency_local(self, c, frequency=None):
         """
         Read and write frequency setting from/to local oscillators.
 
@@ -1218,7 +1218,7 @@ class QuBE_Server(DeviceServer):
         return frequency
 
     @setting(401, "Frequency TX NCO", frequency=["v[Hz]"], returns=["v[Hz]"])
-    def coarse_tx_nco_frequency(self, c, frequency=None):
+    def frequency_tx_nco(self, c, frequency=None):
         """
         Read and write frequency setting from/to coarse NCOs.
 
@@ -1256,7 +1256,7 @@ class QuBE_Server(DeviceServer):
         frequency=["v[Hz]"],
         returns=["v[Hz]"],
     )
-    def fine_tx_nco_frequency(self, c, channel, frequency=None):
+    def frequency_tx_fine_nco(self, c, channel, frequency=None):
         """
         Read and write frequency setting from/to fine NCOs.
 
