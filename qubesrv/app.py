@@ -13,7 +13,7 @@ from labrad.units import ns, us
 
 from constants import QSConstants
 from server import QuBE_Server
-from manager import QuBE_Manager_Server
+#from manager import QuBE_Manager_Server
 from helper import QuBE_Server_debug_otasuke
 
 ############################################################
@@ -189,9 +189,9 @@ def usage():
 
 try:
     server_select = os.environ[QSConstants.ENV_SRVSEL]
-    if server_select == QSConstants.MNRNAME:
-        __server__ = QuBE_Manager_Server()
-    elif server_select == QSConstants.SRVNAME:
+    # if server_select == QSConstants.MNRNAME:
+    #     __server__ = QuBE_Manager_Server()
+    if server_select == QSConstants.SRVNAME:
         __server__ = QuBE_Server()
     else:
         server_select = None

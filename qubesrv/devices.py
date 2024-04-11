@@ -232,8 +232,8 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
 
             box = Quel1Box.create(
                 ipaddr_wss=ipfpga,
-                ipaddr_sss=ipsync,
-                ipaddr_css=iplsi,
+                #ipaddr_sss=ipsync,
+                #ipaddr_css=iplsi,
                 boxtype=device_type,
             )
             box.reconnect()

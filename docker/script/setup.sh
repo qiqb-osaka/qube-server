@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cd /root/lib/
 cd quelware/quel_ic_config
 pip install -r requirements_simplemulti_standard.txt
 cd ../..
