@@ -31,13 +31,11 @@ done
 # start data vault server
 python $LIB_PATH/labrad-servers/data_vault.py >& $HOME/log/data-vault.log &
 
-# TODO: change qiqb-osaka/qube-server
 # start qube server
 # NOTE: without QUBE_SERVER env, qube server will run in debug mode
 QUBE_SERVER="QuBE Server" \
 UDP_RW_BIND_ADDRESS="10.0.0.3" \
 python $LIB_PATH/qubesrv/app.py >& $HOME/log/qube-server.log &
-#python $LIB_PATH/QubeServer.py >& $HOME/log/qube-server.log &
 #python $LIB_PATH/qube-calib/QubeServer.py >& $HOME/log/qube-server.log &
 
 # use 'wait' command to make the script pause and keep the container running

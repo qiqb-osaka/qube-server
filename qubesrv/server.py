@@ -161,7 +161,7 @@ class QuBE_Server(DeviceServer):
                 return Quel1BoxType.QuBE_RIKEN_TypeB
             else:
                 return None
-        # TODO: 名前がQuel-1だが、Port配置はQuBEと同じになっている模様。
+        # 名前がQuel-1だが、Port配置はQuBEと同じになっている模様。
         elif "Quel-1" in name:
             if type == "A":
                 return Quel1BoxType.QuBE_OU_TypeA
@@ -190,8 +190,6 @@ class QuBE_Server(DeviceServer):
         idx = name.rfind("_")
         try:
             port = name[idx + 1:]
-            # TODO: debug
-            #print("port:", port)
             if port == "01":
                 # 0がDACのポートで、1がADCのポート
                 return 0
@@ -223,17 +221,12 @@ class QuBE_Server(DeviceServer):
 
     # TODO: とりあえずコンバートテーブルを作るが後でPossibleLinksで登録する
     def convert_device_group_and_line(self, name, type):
-        # TODO: QuEL-1 Type-Aは放置
         matrix_a = {0:(0,0), 2:(0,1), 5:(0,2), 6:(0,3), 13:(1,0), 11:(1,1), 8:(1,2), 7:(1,3)}
         matrix_b = {1:(0,0), 2:(0,1), 3:(0,2), 4:(0,3), 8:(1,0), 9:(1,1), 11:(1,2), 10:(1,3)}
         port = self.get_dac_port_from_name(name)
-        # TODO: debug
-        # print("port:", port)
-        # print("type:", type)
         if type == "B":
             return matrix_b.get(port)
         else:
-            # TODO: QuEL-1 Type-Aは放置
             return matrix_a.get(port)
 
     def instantiateChannel(self, name, channels, awg_ctrl, cap_ctrl, lsi_ctrl, info):
@@ -241,37 +234,29 @@ class QuBE_Server(DeviceServer):
             awg_ch_ids = channel["ch_dac"]
             cnco_id = channel["cnco_dac"]
             fnco_id = channel["fnco_dac"]
-            lo_id = channel["lo_dac"]
-            mix_id = channel[QSConstants.CNL_MIXCH_TAG]
-            mix_sb = channel[QSConstants.CNL_MIXSB_TAG]
-            nco_device = lsi_ctrl.ad9082[cnco_id[0]]
-            lo_device = lsi_ctrl.lmx2594[lo_id]
-            mix_device = lsi_ctrl.adrf6780[mix_id]
+            #lo_id = channel["lo_dac"]
+            #mix_id = channel[QSConstants.CNL_MIXCH_TAG]
+            #mix_sb = channel[QSConstants.CNL_MIXSB_TAG]
+            #nco_device = lsi_ctrl.ad9082[cnco_id[0]]
+            #lo_device = lsi_ctrl.lmx2594[lo_id]
+            #mix_device = lsi_ctrl.adrf6780[mix_id]
             ipfpga = info[QSConstants.SRV_IPFPGA_TAG]
             iplsi = info[QSConstants.SRV_IPLSI_TAG]
             ipsync = info[QSConstants.SRV_IPCLK_TAG]
-            # # TODO: debug
-            # print("name:", name)
-            # print("channel:", channel)
-            # print("channel:name:", channel[QSConstants.CNL_NAME_TAG])
             device_type = self.convert_device_type_for_quelware(name, info["type"])
             group, line = self.convert_device_group_and_line(channel[QSConstants.CNL_NAME_TAG], info["type"])
-            # TODO: debug
-            # print("group:", group)
-            # print("line:", line)
             rline = self.get_adc_rline_from_name(channel[QSConstants.CNL_NAME_TAG])
-            # TODO: simple_boxからportを取得するように変更したい
 
             args = name, role
             kw = dict(
                 awg_ctrl=awg_ctrl,
                 awg_ch_ids=awg_ch_ids,
-                nco_device=nco_device,
+                #nco_device=nco_device,
                 cnco_id=cnco_id[1],
                 fnco_id=[_id for _chip, _id in fnco_id],
-                lo_device=lo_device,
-                mix_device=mix_device,
-                mix_sb=mix_sb,
+                #lo_device=lo_device,
+                #mix_device=mix_device,
+                #mix_sb=mix_sb,
                 chassis=chassis,
                 ipfpga=ipfpga,
                 iplsi=iplsi,

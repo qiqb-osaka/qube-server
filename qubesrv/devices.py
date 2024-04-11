@@ -224,14 +224,8 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
 
         yield super(QuBE_Control_LSI, self).get_connected(*args, **kw)
 
-        # TODO: debug
-        #print("kw:", kw)
-
         self.__initialized = False
         try:
-            # ipfpga = kw[QSConstants.SRV_IPFPGA_TAG]
-            # iplsi = kw[QSConstants.SRV_IPLSI_TAG]
-            # ipsync = kw[QSConstants.SRV_IPCLK_TAG]
             ipfpga = kw["ipfpga"]
             iplsi = kw["iplsi"]
             ipsync = kw["ipsync"]
@@ -256,12 +250,6 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
             #print("start get_dac_coarse_frequency")
             self._coarse_frequency = self.get_dac_coarse_frequency()
             # DEBUG: for buffered operation, partly used.
-
-            # FIXME: あとで消す
-            # # ADC
-            # print("start cdnco_id")
-            # self._rxcnco_id = kw["cdnco_id"]
-            # print("end cdnco_id")
 
             self.__initialized = True
             #print("end __initialized")
@@ -297,23 +285,17 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
         self._css.set_sideband(self._group, self._line, qwsb)
         #self._mix_usb_lsb = sideband
 
-    # TODO: NCO
     def get_dac_coarse_frequency(self):
-        return self._css.get_dac_cnco(self._group, self._line) // 1e6
+        return self._css.get_dac_cnco(self._group, self._line) / 1e6
 
     def set_dac_coarse_frequency(self, freq_in_mhz):
         self._css.set_dac_cnco(self._group, self._line, 1e6 * freq_in_mhz)
         self._coarse_frequency = freq_in_mhz
 
     def get_dac_fine_frequency(self, channel):
-        return self._css.get_dac_fnco(self._group, self._line, channel) // 1e6
+        return self._css.get_dac_fnco(self._group, self._line, channel) / 1e6
 
     def set_dac_fine_frequency(self, channel, freq_in_mhz):
-        # TODO: debug
-        # print("set_dac_fnco [freq_in_mhz] before:", 1e6 * freq_in_mhz)
-        # if freq_in_mhz < 0:
-        #     freq_in_mhz = QSConstants.NCO_SAMPLE_F + freq_in_mhz
-        # print("set_dac_fnco [freq_in_mhz] changed:", 1e6 * freq_in_mhz)
         self._css.set_dac_fnco(self._group, self._line, channel, 1e6 * freq_in_mhz)
         self._fine_frequencies[channel] = freq_in_mhz
 
@@ -355,13 +337,15 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
     def static_check_dac_fine_frequency(self, freq_in_mhz):
         resolution = QSConstants.DAC_FNCO_RESOL
         resp = self.static_check_value(freq_in_mhz, resolution, include_zero=True)
-        # FIXME: 多分ここのチェックがいらないはず
-        if resp:
-            print("static_check_dac_fine_frequency: freq_in_mhz:", freq_in_mhz)
-            resp = (
-                -QSConstants.NCO_SAMPLE_F < freq_in_mhz
-                and freq_in_mhz < QSConstants.NCO_SAMPLE_F
-            )
+        # ここのチェックは、2000のレンジではなく1000のレンジがよい
+        # 厳密には、CDUCの値によって変わるので、その値を取得してチェックする
+        # CDUC6の場合、-1000MHzから1000MHzまでの範囲でチェックする
+        # if resp:
+        #     print("static_check_dac_fine_frequency: freq_in_mhz:", freq_in_mhz)
+        #     resp = (
+        #         -QSConstants.NCO_SAMPLE_F < freq_in_mhz
+        #         and freq_in_mhz < QSConstants.NCO_SAMPLE_F
+        #     )
         return resp
 
     # # ADC
@@ -400,10 +384,7 @@ class QuBE_ReadoutLine(QuBE_ControlLine):
             #self._rxcnco_id = kw["cdnco_id"]
 
             print("QuBE_ReadoutLine kw:", kw)
-            # TODO: debug
-            print("start get_adc_coarse_frequency()")
             self._rx_coarse_frequency = self.get_adc_coarse_frequency()
-            print("end get_adc_coarse_frequency()")
             # print(self._name,'rxnco',self._rx_coarse_frequency)
             self.__initialized = True
         except Exception as e:
@@ -663,19 +644,14 @@ class QuBE_ReadoutLine(QuBE_ControlLine):
         self._cap_ctrl.select_trigger_awg(self._cap_mod_id, trigger_board)
         self._cap_ctrl.enable_start_trigger(*enabled_capture_units)
 
-    # TODO: quelware
-    # QuBE_Control_LSIで実装してそれを呼ぶようにしたい
     def set_adc_coarse_frequency(self, freq_in_mhz):
         self._css.set_adc_cnco(self._group, self._rline, 1e6 * freq_in_mhz)
         self._rx_coarse_frequency = freq_in_mhz  # DEBUG seems not used right now
 
-    # TODO: quelware
-    # QuBE_Control_LSIで実装してそれを呼ぶようにしたい
-    # self._rxcnco_idとは何か？
     def get_adc_coarse_frequency(self):
         #return self._css.get_adc_cnco(self._group, self._rline)
         # FIXME: あとで直す。とりあえずrを固定で入れる
-        return self._css.get_adc_cnco(self._group, "r") // 1e6
+        return self._css.get_adc_cnco(self._group, "r") / 1e6
 
     # def static_get_adc_coarse_frequency(self, nco_ctrl, ch):
     #     piw = self.static_get_adc_coarse_ftw(nco_ctrl, ch)

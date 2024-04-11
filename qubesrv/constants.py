@@ -17,9 +17,7 @@ class QSConstants:
     THREAD_MAX_WORKERS = 32
     DAQ_MAXLEN = 199936  # nano-seconds -> 24,992 AWG Word
     DAC_SAMPLE_R = 12000  # MHz
-    # TODO: NCO_SAMPLE_FとCDUC6
     NCO_SAMPLE_F = 2000  # MHz, NCO frequency at main data path
-    #NCO_SAMPLE_F = 1000 # MHz, NCO frequency at main data path
     ADC_SAMPLE_R = 6000  # MHz
     DACBB_SAMPLE_R = 500  # MHz, baseband sampling frequency
     ADCBB_SAMPLE_R = 500  # MHz, baseband sampling frequency
