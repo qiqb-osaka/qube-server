@@ -27,6 +27,7 @@ from utils import pingger
 # > BITFILE=/home/qube/qube_master_20220721.bit vivado -mode batch -source /config_au200.tcl
 #
 
+REGAPIPATH = "adi_api_path"
 
 class QuBE_Manager_Device(DeviceWrapper):
 
@@ -137,7 +138,7 @@ class QuBE_Manager_Server(DeviceServer):
             config = yield reg.get(QSConstants.REGLNK)
             self.possibleLinks = self.extract_links(json.loads(config))
             self.master_link = yield reg.get(QSConstants.REGMASTERLNK)
-            self.adi_api_path = yield reg.get(QSConstants.REGAPIPATH)
+            self.adi_api_path = yield reg.get(REGAPIPATH)
 
             self._master_ctrl = yield QuBEMasterClient(
                 self.master_link, receiver_limit_by_bind=True

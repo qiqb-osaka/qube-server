@@ -10,15 +10,15 @@ class QSConstants:
     REGLNK = "possible_links"
     REGSKEW = "chassis_skew"
     REGMASTERLNK = "master_link"
-    REGAPIPATH = "adi_api_path"
+    #REGAPIPATH = "adi_api_path"
     SRVNAME = "QuBE Server"
     MNRNAME = "QuBE Manager"
     ENV_SRVSEL = "QUBE_SERVER"
     THREAD_MAX_WORKERS = 32
     DAQ_MAXLEN = 199936  # nano-seconds -> 24,992 AWG Word
-    DAC_SAMPLE_R = 12000  # MHz
+    #DAC_SAMPLE_R = 12000  # MHz
     NCO_SAMPLE_F = 2000  # MHz, NCO frequency at main data path
-    ADC_SAMPLE_R = 6000  # MHz
+    #ADC_SAMPLE_R = 6000  # MHz
     DACBB_SAMPLE_R = 500  # MHz, baseband sampling frequency
     ADCBB_SAMPLE_R = 500  # MHz, baseband sampling frequency
     ADCDCM_SAMPLE_R = 125  # MHz, decimated sampling frequency
@@ -32,7 +32,7 @@ class QSConstants:
     #    = 1/ADCBB_SAMPLE_R
     DAC_WORD_IVL = 8  # ns; DAC WORD in nanoseconds
     DAC_WORD_SAMPLE = 4  # Sample/(DAC word); DEBUG not used
-    DAQ_CNCO_BITS = 48
+    #DAQ_CNCO_BITS = 48
     DAQ_LO_RESOL = 100  # - The minimum frequency resolution of
     #   the analog local oscillators in MHz.
     DAC_CNCO_RESOL = 12000 / 2**11  # - The frequency resolution of the

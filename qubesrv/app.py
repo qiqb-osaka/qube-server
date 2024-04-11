@@ -16,8 +16,6 @@ from server import QuBE_Server
 from manager import QuBE_Manager_Server
 from helper import QuBE_Server_debug_otasuke
 
-#from manager import QuBE_Manager
-
 ############################################################
 #
 # USAGE and for my debugging

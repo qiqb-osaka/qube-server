@@ -20,7 +20,6 @@ from quel_clock_master import (
     QuBEMasterClient,
     SequencerClient,
 )  # for multi-sync operation
-import qubelsi.qube
 
 from quel_ic_config import Quel1BoxType
 
@@ -40,7 +39,6 @@ class QuBE_Server(DeviceServer):
     }
     possibleLinks = {}
     chassisSkew = {}
-    adi_api_path = None
 
     @inlineCallbacks
     def initServer(self):  # @inlineCallbacks
@@ -54,13 +52,7 @@ class QuBE_Server(DeviceServer):
             self.possibleLinks = json.loads(config)
             skew = yield reg.get(QSConstants.REGSKEW)
             self.chassisSkew = json.loads(skew)
-            self.master_link = yield reg.get(QSConstants.REGMASTERLNK)
-            self.adi_api_path = yield reg.get(QSConstants.REGAPIPATH)
-            self._master_ctrl = yield QuBEMasterClient(
-                self.master_link, receiver_limit_by_bind=True
-            )
             self._sync_ctrl = dict()
-            self.__is_clock_opened = True
         except Exception as e:
             print(sys._getframe().f_code.co_name, e)
 
@@ -229,17 +221,9 @@ class QuBE_Server(DeviceServer):
         else:
             return matrix_a.get(port)
 
-    def instantiateChannel(self, name, channels, awg_ctrl, cap_ctrl, lsi_ctrl, info):
-        def gen_awg(name, role, chassis, channel, awg_ctrl, cap_ctrl, lsi_ctrl):
+    def instantiateChannel(self, name, channels, awg_ctrl, cap_ctrl, info):
+        def gen_awg(name, role, chassis, channel, awg_ctrl, cap_ctrl):
             awg_ch_ids = channel["ch_dac"]
-            cnco_id = channel["cnco_dac"]
-            fnco_id = channel["fnco_dac"]
-            #lo_id = channel["lo_dac"]
-            #mix_id = channel[QSConstants.CNL_MIXCH_TAG]
-            #mix_sb = channel[QSConstants.CNL_MIXSB_TAG]
-            #nco_device = lsi_ctrl.ad9082[cnco_id[0]]
-            #lo_device = lsi_ctrl.lmx2594[lo_id]
-            #mix_device = lsi_ctrl.adrf6780[mix_id]
             ipfpga = info[QSConstants.SRV_IPFPGA_TAG]
             iplsi = info[QSConstants.SRV_IPLSI_TAG]
             ipsync = info[QSConstants.SRV_IPCLK_TAG]
@@ -251,12 +235,6 @@ class QuBE_Server(DeviceServer):
             kw = dict(
                 awg_ctrl=awg_ctrl,
                 awg_ch_ids=awg_ch_ids,
-                #nco_device=nco_device,
-                cnco_id=cnco_id[1],
-                fnco_id=[_id for _chip, _id in fnco_id],
-                #lo_device=lo_device,
-                #mix_device=mix_device,
-                #mix_sb=mix_sb,
                 chassis=chassis,
                 ipfpga=ipfpga,
                 iplsi=iplsi,
@@ -269,9 +247,9 @@ class QuBE_Server(DeviceServer):
 
             return (name, args, kw)
 
-        def gen_mux(name, role, chassis, channel, awg_ctrl, cap_ctrl, lsi_ctrl):
+        def gen_mux(name, role, chassis, channel, awg_ctrl, cap_ctrl):
             _name, _args, _kw = gen_awg(
-                name, role, chassis, channel, awg_ctrl, cap_ctrl, lsi_ctrl
+                name, role, chassis, channel, awg_ctrl, cap_ctrl
             )
 
             cap_mod_id = channel["ch_adc"]
@@ -298,7 +276,6 @@ class QuBE_Server(DeviceServer):
                 channel,
                 awg_ctrl,
                 cap_ctrl,
-                lsi_ctrl,
             )
             to_be_added = (
                 gen_awg(*args)
@@ -312,11 +289,8 @@ class QuBE_Server(DeviceServer):
         return devices
 
     def instantiateQube(self, name, info):
-        # TODO: debug
-        #print("info:", info)
         try:
             ipfpga = info[QSConstants.SRV_IPFPGA_TAG]
-            iplsi = info[QSConstants.SRV_IPLSI_TAG]
             channels = info["channels"]
         except Exception as e:
             print(sys._getframe().f_code.co_name, e)
@@ -327,16 +301,13 @@ class QuBE_Server(DeviceServer):
             cap_ctrl = QuBECaptureCtrl(ipfpga)  # CAP CONTROL (inherited from e7awgsw)
             awg_ctrl.initialize(*AWG.all())
             cap_ctrl.initialize(*CaptureModule.all())
-            lsi_ctrl = qubelsi.qube.Qube(
-                iplsi, self.adi_api_path
-            )  # LSI CONTROL (qubelsi.qube)
         except Exception as e:
             print(sys._getframe().f_code.co_name, e)
             return list()
 
         try:
             devices = self.instantiateChannel(
-                name, channels, awg_ctrl, cap_ctrl, lsi_ctrl, info
+                name, channels, awg_ctrl, cap_ctrl, info
             )
         except Exception as e:
             print(sys._getframe().f_code.co_name, e)
