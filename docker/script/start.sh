@@ -2,7 +2,7 @@
 
 export LIB_PATH=/root/lib
 export PYTHONPATH=$PYTHONPATH:$LIB_PATH
-export PYTHONPATH=$PYTHONPATH:$LIB_PATH/qube_master
+export PYTHONPATH=$PYTHONPATH:$LIB_PATH/quelware/qube_master
 export PYTHONPATH=$PYTHONPATH:$LIB_PATH/measurement_tool_orion:$LIB_PATH/measurement_tool_orion_automation
 export QUBECALIB_PATH_TO_ROOT=$LIB_PATH/qube-calib
 

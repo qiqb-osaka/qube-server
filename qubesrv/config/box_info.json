@@ -1,0 +1,8 @@
+{
+    "ou3-01": {
+        "id": "OU 3-01",
+        "type": "qube-ou-a",
+        "ip": "10.*.0.31",
+        "comment": "This box is using old MEE board"
+    }
+}

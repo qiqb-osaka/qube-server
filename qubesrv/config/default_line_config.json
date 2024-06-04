@@ -1,0 +1,16 @@
+{
+    "ou3-01": {
+        "readout": {
+            "sideband": "U",
+            "vatt": 2048
+        },
+        "control": {
+            "sideband": "L",
+            "vatt": 3072
+        },
+        "pump": {
+            "sideband": "U",
+            "vatt": 3072
+        }
+    }
+}

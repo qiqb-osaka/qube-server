@@ -211,5 +211,5 @@ if __name__ == "__main__":
     #  print sys.argv
     #  if sys.argv:
     #    del sys.argv[1:]
-    print("tmori dev mode4")
+    print("new qube server start.")
     util.runServer(__server__)

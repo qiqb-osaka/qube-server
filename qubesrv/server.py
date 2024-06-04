@@ -27,6 +27,8 @@ from constants import QSConstants, QSMessage
 from devices import QuBE_ReadoutLine, QuBE_ControlLine
 from utils import pingger, QuBECaptureCtrl
 
+from qube_box_setup_helper import QubeBoxInfo, QubePortMapper
+
 ############################################################
 #
 # QUBE SERVER
@@ -53,6 +55,7 @@ class QuBE_Server(DeviceServer):
             skew = yield reg.get(QSConstants.REGSKEW)
             self.chassisSkew = json.loads(skew)
             self._sync_ctrl = dict()
+            self.box_info = QubeBoxInfo()
         except Exception as e:
             print(sys._getframe().f_code.co_name, e)
 
@@ -91,19 +94,6 @@ class QuBE_Server(DeviceServer):
     # | 1       | 1     | (1, 2)         | 11    | Ctrl |
     # | 1       | 0     | (1, 3)         | 9     | Ctrl |
 
-    # 例：Quel-1 Type-B の場合
-    # | MxFEの番号 | DAC番号 | (group, line)　 | ポート番号 | 機能   |
-    # |-----------|--------|----------------|-------|------|
-    # | 0       | 0     | (0, 0)         | 1     | Ctrl |
-    # | 0       | 1     | (0, 1)         | 2     | Ctrl |
-    # | 0       | 2     | (0, 2)         | 3     | Ctrl |
-    # | 0       | 3     | (0, 3)         | 4     | Ctrl |
-    # | 1       | 3     | (1, 0)         | 8     | Ctrl |
-    # | 1       | 2     | (1, 1)         | 9     | Ctrl |
-    # | 1       | 1     | (1, 2)         | 11    | Ctrl |
-    # | 1       | 0     | (1, 3)         | 10    | Ctrl |
-    # おそらくtype:Bの場合、全部これ
-
     # 例: QuBE の場合
     # | MxFEの番号 | DAC番号 | (group, line)　 | ポート番号 | Type-A機能 | Type-B 機能 |
     # |-----------|--------|----------------|-------|----------|-----------|
@@ -137,40 +127,7 @@ class QuBE_Server(DeviceServer):
     # | 12 | 6 | 1 | 2, 2, 4 | (0, m, 3)              | 0  | 3 |
 
 
-    # TODO: とりあえずコンバートテーブルを作るが後でPossibleLinksで登録する
-    def convert_device_type_for_quelware(self, name, type) -> Quel1BoxType:
-        if "ou" in name:
-            if type == "A":
-                return Quel1BoxType.QuBE_OU_TypeA
-            elif type == "B":
-                return Quel1BoxType.QuBE_OU_TypeB
-            else:
-                return None
-        elif "riken" in name:
-            if type == "A":
-                return Quel1BoxType.QuBE_RIKEN_TypeA
-            elif type == "B":
-                return Quel1BoxType.QuBE_RIKEN_TypeB
-            else:
-                return None
-        # 名前がQuel-1だが、Port配置はQuBEと同じになっている模様。
-        elif "Quel-1" in name:
-            if type == "A":
-                return Quel1BoxType.QuBE_OU_TypeA
-            elif type == "B":
-                return Quel1BoxType.QuBE_OU_TypeB
-            else:
-                return None
-        elif "Quel" in name:
-            if type == "A":
-                return Quel1BoxType.QuEL1_TypeA
-            elif type == "B":
-                return Quel1BoxType.QuEL1_TypeB
-            else:
-                return None
-        return None
-
-    # TODO: PossibleLinksで登録するようになったらこれも不要
+    # # TODO: PossibleLinksで登録するようになったらこれも不要
     def get_dac_port_from_name(self, name):
         # 名前の後ろにポート番号がつく（16進数なので注意）
         # readout_cdの場合は、13
@@ -196,40 +153,20 @@ class QuBE_Server(DeviceServer):
         except Exception:
             return -1
 
-    # TODO: PossibleLinksで登録するようになったらこれも不要
-    def get_adc_rline_from_name(self, name):
-        idx = name.rfind("_")
-        try:
-            port = name[idx + 1:]
-            if port == "01":
-                # 0がDACのポートで、1がADCのポート
-                return "r"
-            elif port == "cd":
-                # d:13がDACのポートで、c:12がADCのポート
-                return "m"
-            return ""
-        except Exception:
-            return ""
-
-    # TODO: とりあえずコンバートテーブルを作るが後でPossibleLinksで登録する
-    def convert_device_group_and_line(self, name, type):
-        matrix_a = {0:(0,0), 2:(0,1), 5:(0,2), 6:(0,3), 13:(1,0), 11:(1,1), 8:(1,2), 7:(1,3)}
-        matrix_b = {1:(0,0), 2:(0,1), 3:(0,2), 4:(0,3), 8:(1,0), 9:(1,1), 11:(1,2), 10:(1,3)}
-        port = self.get_dac_port_from_name(name)
-        if type == "B":
-            return matrix_b.get(port)
-        else:
-            return matrix_a.get(port)
-
     def instantiateChannel(self, name, channels, awg_ctrl, cap_ctrl, info):
+        box_type = self.box_info.get_box_type(name)
+        box_type_str = self.box_info.get_box_type_str(name)
+
         def gen_awg(name, role, chassis, channel, awg_ctrl, cap_ctrl):
             awg_ch_ids = channel["ch_dac"]
             ipfpga = info[QSConstants.SRV_IPFPGA_TAG]
             iplsi = info[QSConstants.SRV_IPLSI_TAG]
             ipsync = info[QSConstants.SRV_IPCLK_TAG]
-            device_type = self.convert_device_type_for_quelware(name, info["type"])
-            group, line = self.convert_device_group_and_line(channel[QSConstants.CNL_NAME_TAG], info["type"])
-            rline = self.get_adc_rline_from_name(channel[QSConstants.CNL_NAME_TAG])
+            port = self.get_dac_port_from_name(name)
+            pmaper = QubePortMapper(box_type_str)
+            group, line = pmaper.resolve_line(port)
+            # TODO: rline type:B の場合は、rline = "m" にする？ そうでもないらしい。
+            rline = "r"
 
             args = name, role
             kw = dict(
@@ -239,7 +176,7 @@ class QuBE_Server(DeviceServer):
                 ipfpga=ipfpga,
                 iplsi=iplsi,
                 ipsync=ipsync,
-                device_type=device_type,
+                device_type=box_type,
                 group=group,
                 line=line,
                 rline=rline,
