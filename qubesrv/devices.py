@@ -322,7 +322,7 @@ class QuBE_ReadoutLine(QuBE_ControlLine):
             self._cap_mod_id = kw["cap_mod_id"]
             self._cap_unit = kw["capture_units"]
 
-            print("QuBE_ReadoutLine kw:", kw)
+            #print("QuBE_ReadoutLine kw:", kw)
             self._rx_coarse_frequency = self.get_adc_coarse_frequency()
             # print(self._name,'rxnco',self._rx_coarse_frequency)
             self.__initialized = True

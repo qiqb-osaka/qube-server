@@ -139,3 +139,5 @@ docker/.labrad/
 docker/config/
 
 notebooks/
+
+qubesrv/config/

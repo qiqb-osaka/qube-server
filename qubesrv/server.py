@@ -149,6 +149,10 @@ class QuBE_Server(DeviceServer):
                 return 10
             elif port == "b":
                 return 11
+            elif port == "c":
+                return 12
+            elif port == "d":
+                return 13
             return int(port)
         except Exception:
             return -1
@@ -163,6 +167,7 @@ class QuBE_Server(DeviceServer):
             iplsi = info[QSConstants.SRV_IPLSI_TAG]
             ipsync = info[QSConstants.SRV_IPCLK_TAG]
             port = self.get_dac_port_from_name(name)
+            # print(f"name: {name} port: {port}")
             pmaper = QubePortMapper(box_type_str)
             group, line = pmaper.resolve_line(port)
             # TODO: rline type:B の場合は、rline = "m" にする？ そうでもないらしい。
