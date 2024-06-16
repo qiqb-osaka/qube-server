@@ -12,6 +12,10 @@ mkdir -p $HOME/log
 # start labrad as a background process
 labrad &
 
+# env LABRADHOST=localhost \
+#       LABRADPASSWORD=Cooper2e \
+#       labrad &
+
 # save labrad process id
 labrad_pid=$!
 
@@ -40,3 +44,5 @@ python $LIB_PATH/qubesrv/app.py >& $HOME/log/qube-server.log &
 
 # use 'wait' command to make the script pause and keep the container running
 wait $labrad_pid
+
+#tail -f

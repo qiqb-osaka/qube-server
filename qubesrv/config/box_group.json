@@ -2,7 +2,18 @@
     "XLD2": {
         "master_ip": "10.3.0.255",
         "devices": [
-            "ou3-01"
+            "qube001",
+            "qube002",
+            "qube003",
+            "qube004",
+            "qube005",
+            "qube006",
+            "qube007",
+            "qube008",
+            "qube009",
+            "qube010",
+            "qube011",
+            "qube012"
         ]
     }
 }

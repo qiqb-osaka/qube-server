@@ -14,7 +14,7 @@ reg.mkdir("QuBE")
 reg.cd("QuBE")
 
 # set the parameters for the qube server
-reg.set("adi_api_path", "/root/lib/adi_api_mod")
+reg.set("adi_api_path", "/root/lib/qube-calib-env/adi_api_mod")
 reg.set("master_link", "10.3.0.255")
 
 with open("/root/config/possible_links.json", encoding="utf-8") as f:

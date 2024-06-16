@@ -6,8 +6,8 @@ services:
       context: .
     volumes:
       - ./.labrad:/root/.labrad
-      #- ./lib:/root/lib
-      - ~/work:/root/lib
+      - ./lib:/root/lib
+      #- ~/work:/root/lib
       #- ../QubeServer.py:/root/lib/QubeServer.py
       - ../qubesrv:/root/lib/qubesrv
       - ./config:/root/config
@@ -17,12 +17,3 @@ services:
     network_mode: "host"
     environment:
       - LABRADPORT=7682
-
-  jupyter:
-    image: qiqb/qiqb-docker-jupyter:latest
-    volumes:
-      - ./notebooks:/home/jovyan/notebooks
-      #- ../:/jupyter/lib
-      - ~/work:/jupyter/lib
-    network_mode: "host"
-    command: jupyter lab --port=8888
