@@ -21,7 +21,8 @@ from quel_clock_master import (
     SequencerClient,
 )  # for multi-sync operation
 
-from quel_ic_config import Quel1BoxType
+from quel_ic_config import Quel1Box, Quel1BoxType
+from quel_ic_config.e7resource_mapper import Quel1E7ResourceMapper
 
 from constants import QSConstants, QSMessage
 from devices import QuBE_ReadoutLine, QuBE_ControlLine
@@ -160,19 +161,29 @@ class QuBE_Server(DeviceServer):
     def instantiateChannel(self, name, channels, awg_ctrl, cap_ctrl, info):
         box_type = self.box_info.get_box_type(name)
         box_type_str = self.box_info.get_box_type_str(name)
+        ipfpga = info[QSConstants.SRV_IPFPGA_TAG]
+        iplsi = info[QSConstants.SRV_IPLSI_TAG]
+        ipsync = info[QSConstants.SRV_IPCLK_TAG]
+        box = Quel1Box.create(
+            ipaddr_wss=ipfpga,
+            boxtype=box_type,
+        )
+        #box.reconnect()
+        rmap = Quel1E7ResourceMapper(box.css, box.wss)
 
         def gen_awg(name, role, chassis, channel, awg_ctrl, cap_ctrl):
-            awg_ch_ids = channel["ch_dac"]
-            ipfpga = info[QSConstants.SRV_IPFPGA_TAG]
-            iplsi = info[QSConstants.SRV_IPLSI_TAG]
-            ipsync = info[QSConstants.SRV_IPCLK_TAG]
             port = self.get_dac_port_from_name(name)
-            # print(f"name: {name} port: {port}")
             pmaper = QubePortMapper(box_type_str)
             group, line = pmaper.resolve_line(port)
             # TODO: rline type:B の場合は、rline = "m" にする？ そうでもないらしい。
             rline = "r"
-
+            awg_ch_ids = []
+            mxfe_idx, _ = box.css._DAC_IDX[group, line]
+            chs = box.css._get_channels_of_line(group, line)
+            for ch in chs:
+                awg_idx = int(Quel1E7ResourceMapper._AWGS_FROM_FDUC[mxfe_idx, ch])
+                awg_ch_ids.append(awg_idx)
+            
             args = name, role
             kw = dict(
                 awg_ctrl=awg_ctrl,
@@ -194,15 +205,18 @@ class QuBE_Server(DeviceServer):
                 name, role, chassis, channel, awg_ctrl, cap_ctrl
             )
 
-            cap_mod_id = channel["ch_adc"]
-            cdnco_id = channel["cnco_adc"]
+            port = self.get_dac_port_from_name(name)
+            pmaper = QubePortMapper(box_type_str)
+            group, line = pmaper.resolve_line(port)
+            # TODO: rline type:B の場合は、rline = "m" にする？ そうでもないらしい。
+            rline = "r"
+            cap_mod_id = rmap.get_capture_module_of_rline(group, rline)
             capture_units = CaptureModule.get_units(cap_mod_id)
 
             kw = dict(
                 cap_ctrl=cap_ctrl,
                 capture_units=capture_units,
                 cap_mod_id=cap_mod_id,
-                cdnco_id=cdnco_id[1],
             )
             _kw.update(kw)
             return (_name, _args, _kw)
@@ -252,6 +266,7 @@ class QuBE_Server(DeviceServer):
                 name, channels, awg_ctrl, cap_ctrl, info
             )
         except Exception as e:
+            print("Exception!!! instantiateChannel")
             print(sys._getframe().f_code.co_name, e)
             devices = list()
         return devices
