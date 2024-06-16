@@ -178,10 +178,9 @@ class QuBE_Server(DeviceServer):
             # TODO: rline type:B の場合は、rline = "m" にする？ そうでもないらしい。
             rline = "r"
             awg_ch_ids = []
-            mxfe_idx, _ = box.css._DAC_IDX[group, line]
             chs = box.css._get_channels_of_line(group, line)
-            for ch in chs:
-                awg_idx = int(Quel1E7ResourceMapper._AWGS_FROM_FDUC[mxfe_idx, ch])
+            for i in range(len(chs)):
+                awg_idx = rmap.get_awg_of_channel(group, line, i)
                 awg_ch_ids.append(awg_idx)
             
             args = name, role
