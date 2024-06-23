@@ -1,5 +1,5 @@
 # specify python version as build arg
-ARG PYTHON_VERSION=3.9
+ARG PYTHON_VERSION=3.10
 
 # use official python image as base
 # https://hub.docker.com/_/python
