@@ -11,9 +11,11 @@ services:
       #- ../QubeServer.py:/root/lib/QubeServer.py
       - ../qubesrv:/root/lib/qubesrv
       - ./config:/root/config
+      - /home/labrad/registry.sqlite:/root/config/registry.sqlite
       - ./script:/root/script
       - ./log:/root/log
       - ./work:/root/work
+      - /home/labrad/labrad-data/:/root/labrad-data
     network_mode: "host"
     environment:
       - LABRADPORT=7682

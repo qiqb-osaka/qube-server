@@ -10,11 +10,9 @@ export QUBECALIB_PATH_TO_ROOT=$LIB_PATH/qube-calib
 mkdir -p $HOME/log
 
 # start labrad as a background process
-labrad &
-
-# env LABRADHOST=localhost \
-#       LABRADPASSWORD=Cooper2e \
-#       labrad &
+#labrad &
+export LABRADNODE=kappa_docker
+labrad --registry file:///root/config/registry.sqlite < /dev/null >& /root/log/labrad.log &
 
 # save labrad process id
 labrad_pid=$!
