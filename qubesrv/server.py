@@ -1,6 +1,7 @@
 import sys
 import json
 import concurrent
+import re
 
 import numpy as np
 
@@ -129,34 +130,41 @@ class QuBE_Server(DeviceServer):
 
 
     # # TODO: PossibleLinksで登録するようになったらこれも不要
-    def get_dac_port_from_name(self, name):
-        # 名前の後ろにポート番号がつく（16進数なので注意）
-        # readout_cdの場合は、13
-        # a: 10
-        # b: 11
-        # c: 12
-        # d: 13
-        #print("name:", name)
-        idx = name.rfind("_")
-        try:
-            port = name[idx + 1:]
-            if port == "01":
-                # 0がDACのポートで、1がADCのポート
-                return 0
-            elif port == "cd":
-                # d:13がDACのポートで、c:12がADCのポート
-                return 13
-            elif port == "a":
-                return 10
-            elif port == "b":
-                return 11
-            elif port == "c":
-                return 12
-            elif port == "d":
-                return 13
-            return int(port)
-        except Exception:
-            return -1
+    def get_dac_group_line_from_name(self, box, pmaper, name):
+        _, role, port_string = self.parse_qube_device_id(name)
+        if role == "readout":
+            for c in port_string:
+                port = int(c, 16)
+                group, line = pmaper.resolve_line(port)
+                if box._dev.is_output_line(group, line): # select the output line
+                    break
+        else:
+            port = int(port_string, 16)
+            group, line = pmaper.resolve_line(port)
+        return group, line
+
+    def get_adc_group_line_from_name(self, box, pmaper, name):
+        _, role, port_string = self.parse_qube_device_id(name)
+        if role == "readout":
+            for c in port_string:
+                port = int(c, 16)
+                group, line = pmaper.resolve_line(port)
+                if box._dev.is_input_line(group, line): # select the input line
+                    break
+        else:
+            raise Exception("Only readout line has adc.")
+        return group, line
+    
+    def parse_qube_device_id(self, device_id):
+        devicd_id_regexp = re.compile(r"(qube[0-9]{3})-(control|readout|pump)_([0-9a-d]{1,2})")
+        m = devicd_id_regexp.match(device_id)
+        if m:
+            device_name = m.group(1)
+            port_type = m.group(2)
+            port_string = m.group(3)
+        else:
+            raise ValueError(f"Cannot parse device_id: {device_id}")
+        return device_name, port_type, port_string
 
     def instantiateChannel(self, name, channels, awg_ctrl, cap_ctrl, info):
         box_type = self.box_info.get_box_type(name)
@@ -172,11 +180,13 @@ class QuBE_Server(DeviceServer):
         rmap = Quel1E7ResourceMapper(box.css, box.wss)
 
         def gen_awg(name, role, chassis, channel, awg_ctrl, cap_ctrl):
-            port = self.get_dac_port_from_name(name)
             pmaper = QubePortMapper(box_type_str)
-            group, line = pmaper.resolve_line(port)
+            group, line = self.get_dac_group_line_from_name(box, pmaper, name)
             # TODO: rline type:B の場合は、rline = "m" にする？ そうでもないらしい。
-            rline = "r"
+            try:
+                group, rline = self.get_adc_group_line_from_name(box, pmaper, name)
+            except:
+                rline = None
             awg_ch_ids = []
             chs = box.css._get_channels_of_line(group, line)
             for i in range(len(chs)):
@@ -204,11 +214,9 @@ class QuBE_Server(DeviceServer):
                 name, role, chassis, channel, awg_ctrl, cap_ctrl
             )
 
-            port = self.get_dac_port_from_name(name)
             pmaper = QubePortMapper(box_type_str)
-            group, line = pmaper.resolve_line(port)
             # TODO: rline type:B の場合は、rline = "m" にする？ そうでもないらしい。
-            rline = "r"
+            group, rline = self.get_adc_group_line_from_name(box, pmaper, name)
             cap_mod_id = rmap.get_capture_module_of_rline(group, rline)
             capture_units = CaptureModule.get_units(cap_mod_id)
 
