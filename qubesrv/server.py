@@ -31,6 +31,7 @@ from utils import pingger, QuBECaptureCtrl
 
 from qube_box_setup_helper import QubeBoxInfo, QubePortMapper
 
+
 ############################################################
 #
 # QUBE SERVER
@@ -128,7 +129,6 @@ class QuBE_Server(DeviceServer):
     # | 12 | 6 | 1 | 2, 2, 4 | (0, m, 2)              | 0  | 2 |
     # | 12 | 6 | 1 | 2, 2, 4 | (0, m, 3)              | 0  | 3 |
 
-
     # # TODO: PossibleLinksで登録するようになったらこれも不要
     def get_dac_group_line_from_name(self, box, pmaper, name):
         _, role, port_string = self.parse_qube_device_id(name)
@@ -136,7 +136,7 @@ class QuBE_Server(DeviceServer):
             for c in port_string:
                 port = int(c, 16)
                 group, line = pmaper.resolve_line(port)
-                if box._dev.is_output_line(group, line): # select the output line
+                if box._dev.is_output_line(group, line):  # select the output line
                     break
         else:
             port = int(port_string, 16)
@@ -149,14 +149,16 @@ class QuBE_Server(DeviceServer):
             for c in port_string:
                 port = int(c, 16)
                 group, line = pmaper.resolve_line(port)
-                if box._dev.is_input_line(group, line): # select the input line
+                if box._dev.is_input_line(group, line):  # select the input line
                     break
         else:
             raise Exception("Only readout line has adc.")
         return group, line
-    
+
     def parse_qube_device_id(self, device_id):
-        devicd_id_regexp = re.compile(r"(qube[0-9]{3})-(control|readout|pump)_([0-9a-d]{1,2})")
+        devicd_id_regexp = re.compile(
+            r"(qube[0-9]{3})-(control|readout|pump)_([0-9a-d]{1,2})"
+        )
         m = devicd_id_regexp.match(device_id)
         if m:
             device_name = m.group(1)
@@ -176,7 +178,7 @@ class QuBE_Server(DeviceServer):
             ipaddr_wss=ipfpga,
             boxtype=box_type,
         )
-        #box.reconnect()
+        # box.reconnect()
         rmap = Quel1E7ResourceMapper(box.css, box.wss)
 
         def gen_awg(name, role, chassis, channel, awg_ctrl, cap_ctrl):
@@ -192,7 +194,7 @@ class QuBE_Server(DeviceServer):
             for i in range(len(chs)):
                 awg_idx = rmap.get_awg_of_channel(group, line, i)
                 awg_ch_ids.append(awg_idx)
-            
+
             args = name, role
             kw = dict(
                 awg_ctrl=awg_ctrl,
@@ -269,9 +271,7 @@ class QuBE_Server(DeviceServer):
             return list()
 
         try:
-            devices = self.instantiateChannel(
-                name, channels, awg_ctrl, cap_ctrl, info
-            )
+            devices = self.instantiateChannel(name, channels, awg_ctrl, cap_ctrl, info)
         except Exception as e:
             print("Exception!!! instantiateChannel")
             print(sys._getframe().f_code.co_name, e)
