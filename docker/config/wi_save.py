@@ -46,9 +46,9 @@ def main(
         #labrad_hostname = "172.17.0.1",
         #labrad_hostname = "gateway.docker.internal",
         #labrad_hostname = "172.27.99.35",
-        #labrad_hostname = "localhost", 
+        labrad_hostname = "localhost", 
         labrad_username = "",
-        labrad_password = "Cooper2e",
+        #labrad_password = "",
         labrad_password = "",
         cooling_down_id = "CD26",
         experiment_username = "cloud",
@@ -56,54 +56,30 @@ def main(
     )
     
     wiring_info = {
-    "bias": {
-        "M0": {
-            "device_id": "quel1se-1-01"
-        },
-        "M1": {
-            "device_id": "quel1se-1-02"
-        }
-    },
-    "control": {
-        "Q0": {
-            "device_id": "quel1se-1-01-control_6"
-        },
-        "Q1": {
-            "device_id": "quel1se-1-01-control_7"
-        },
-        "Q2": {
-            "device_id": "quel1se-1-01-control_8"
-        },
-        "Q3": {
-            "device_id": "quel1se-1-01-control_9"
-        },
-        "Q4": {
-            "device_id": "quel1se-1-02-control_6"
-        },
-        "Q5": {
-            "device_id": "quel1se-1-02-control_7"
-        },
-        "Q6": {
-            "device_id": "quel1se-1-02-control_8"
-        },
-        "Q7": {
-            "device_id": "quel1se-1-02-control_9"
-        }
-    },
-    "pump": {
-        "M0": {
-            "device_id": "quel1se-1-01-pump_2"
-        },
-        "M1": {
-            "device_id": "quel1se-1-02-pump_2"
-        }
+    # "bias": {
+    #     "M5": {
+    #         "device_id": "ou1-02-readout_01"
+    #     },
+    #     "M9": {
+    #         "device_id": "ou3-01-readout_01"
+    #     }
+    # },
+    'control': {
+        'Q20': {'device_id': 'ou1-02-control_5'},
+        'Q21': {'device_id': 'ou1-02-control_6'},
+        'Q22': {'device_id': 'ou1-02-control_7'},
+        'Q23': {'device_id': 'ou1-02-control_8'},
+        'Q36': {'device_id': 'ou3-01-control_5'},
+        'Q37': {'device_id': 'ou3-01-control_6'},
+        'Q38': {'device_id': 'ou3-01-control_7'},
+        'Q39': {'device_id': 'ou3-01-control_8'}
     },
     "readout": {
-        "M0": {
-            "device_id": "quel1se-1-01-readout_1"
+        "M5": {
+            "device_id": "ou1-02-readout_01"
         },
-        "M1": {
-            "device_id": "quel1se-1-02-readout_1"
+        "M9": {
+            "device_id": "ou3-01-readout_01"
         }
    }
 }
