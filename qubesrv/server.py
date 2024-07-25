@@ -157,7 +157,7 @@ class QuBE_Server(DeviceServer):
 
     def parse_qube_device_id(self, device_id):
         devicd_id_regexp = re.compile(
-            r"(qube[0-9]{3})-(control|readout|pump)_([0-9a-d]{1,2})"
+            r"(quel1se-1-[0-9]{2})-(control|readout|pump|fogi)_([0-9a-d]{1,2})"
         )
         m = devicd_id_regexp.match(device_id)
         if m:
@@ -190,6 +190,14 @@ class QuBE_Server(DeviceServer):
             except:
                 rline = None
             awg_ch_ids = []
+            #print(f"gen_awg() name: {name}, group: {group}, line: {line}, rline: {rline}")
+            # TODO: QuEL-1 SE Riken8のRead-outは、(group, line)が(0, 0)のはずが
+            # このロジックだと(0, 1)になってしまう。
+            # とりあえずline=0にしておく
+            #line = 0
+            if "readout_1" in name:
+                line = 0
+                rline = "r"
             chs = box.css._get_channels_of_line(group, line)
             for i in range(len(chs)):
                 awg_idx = rmap.get_awg_of_channel(group, line, i)
@@ -215,12 +223,14 @@ class QuBE_Server(DeviceServer):
             _name, _args, _kw = gen_awg(
                 name, role, chassis, channel, awg_ctrl, cap_ctrl
             )
-
             pmaper = QubePortMapper(box_type_str)
             # TODO: rline type:B の場合は、rline = "m" にする？ そうでもないらしい。
             group, rline = self.get_adc_group_line_from_name(box, pmaper, name)
-            cap_mod_id = rmap.get_capture_module_of_rline(group, rline)
+            #print(f"name: {name}, group: {group}, rline: {rline}")
+            cap_mod_id = rmap.get_capture_module_of_rline(group, "r")
+            #print(f"cap_mod_id: {cap_mod_id}")
             capture_units = CaptureModule.get_units(cap_mod_id)
+            #print(f"capture_units: {capture_units}")
 
             kw = dict(
                 cap_ctrl=cap_ctrl,
@@ -232,8 +242,14 @@ class QuBE_Server(DeviceServer):
 
         devices = []
         for channel in channels:
+            #print(f"instantiateChannel: {channel}")
             channel_type = channel[QSConstants.CNL_TYPE_TAG]
             channel_name = name + "-" + channel[QSConstants.CNL_NAME_TAG]
+            #print(f"channel_type: {channel_type}, channel_name: {channel_name}")
+            # TODO fogiはスキップ
+            if "fogi" in channel_name:
+                continue
+            
             args = (
                 channel_name,
                 channel_type,
@@ -1126,6 +1142,8 @@ class QuBE_Server(DeviceServer):
 
         """
         dev = self.selectedDevice(c)
+        # TODO: 後で消す
+        print(f"dev.device_name: {dev.device_name}")
         if frequency is None:
             resp = dev.get_lo_frequency()
             frequency = T.Value(resp, "MHz")
