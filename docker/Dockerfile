@@ -32,7 +32,8 @@ RUN apt update && \
     default-jre \
     vim nano curl wget \
     libgirepository1.0-dev \
-    iputils-ping iproute2 dnsutils
+    iputils-ping iproute2 dnsutils \
+    libcairo2-dev pkg-config gir1.2-gtk-3.0 libgtk-3-dev
 
 ENV JAVA_HOME=/usr/lib/jvm/default-java
 
