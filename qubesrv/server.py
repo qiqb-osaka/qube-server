@@ -171,6 +171,8 @@ class QuBE_Server(DeviceServer):
             except:
                 rline = None
             awg_ch_ids = []
+            # TODO: モニター
+            #rline = "m"
             rline = "r"
             print(f"gen_awg() name: {name}, group: {group}, line: {line}, rline: {rline}")
             chs = box.css._get_channels_of_line(group, line)
@@ -201,7 +203,9 @@ class QuBE_Server(DeviceServer):
             pmaper = QubePortMapper(box_type_str)
             group, line = self.get_dac_group_line_from_name(box, pmaper, name)
             print(f"name: {name}, group: {group}, line: {line}")
+            # TODO: モニター: こちらはモニターの場合でも"r"のままでよい
             cap_mod_id = rmap.get_capture_module_of_rline(group, "r")
+            #cap_mod_id = rmap.get_capture_module_of_rline(group, "m")
             #print(f"cap_mod_id: {cap_mod_id}")
             capture_units = CaptureModule.get_units(cap_mod_id)
             #print(f"capture_units: {capture_units}")
