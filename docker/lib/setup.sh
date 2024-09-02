@@ -15,8 +15,8 @@ cd quelware/quel_ic_config
 tar xfv quelware_prebuilt.tgz  
 cd ../..
 
-git clone -b feature/add_qube_instrument_freq_fix https://${GITHUB_TOKEN}@github.com/qipe-nlab/measurement_tool_orion.git
-git clone -b ysuzuki/dev https://${GITHUB_TOKEN}@github.com/qipe-nlab/measurement_tool_orion_automation.git
+git clone -b cloud/qiqb-dev https://${GITHUB_TOKEN}@github.com/qipe-nlab/measurement_tool_orion.git
+git clone -b cloud/qiqb-dev https://${GITHUB_TOKEN}@github.com/qipe-nlab/measurement_tool_orion_automation.git
 git clone https://github.com/tama-sh/sqe_fitting
 
 # download labrad-servers
