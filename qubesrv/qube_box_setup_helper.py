@@ -202,11 +202,11 @@ class QubeBoxSetupHelper:
 
     def __init__(self, device_id):
         self.device_id = device_id
+        self.box_info = QubeBoxInfo()
         self.box = self._create_box(device_id)
         self.sequencer_client = self._create_sequencer_client(device_id)
         self.port_mapper = self._create_port_mapping(device_id)
         self.is_linkedup = False
-        self.box_info = QubeBoxInfo()
 
     def _create_box(self, device_id):
         ipaddr_wss = self.box_info.get_ipaddr_wss(device_id)
