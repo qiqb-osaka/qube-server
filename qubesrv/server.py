@@ -1151,19 +1151,29 @@ class QuBE_Server(DeviceServer):
             frequency: v[Hz]
 
         """
+        # TODO: static_check_dac_coarse_frequency
+        # dev = self.selectedDevice(c)
+        # if frequency is None:
+        #     resp = dev.get_dac_coarse_frequency()
+        #     frequency = T.Value(resp, "MHz")
+        # elif dev.static_check_dac_coarse_frequency(frequency["MHz"]):
+        #     dev.set_dac_coarse_frequency(frequency["MHz"])
+        # else:
+        #     raise ValueError(
+        #         QSMessage.ERR_FREQ_SETTING.format(
+        #             "TX Corse NCO", QSConstants.DAC_CNCO_RESOL
+        #         )
+        #     )
+        # return frequency
+
         dev = self.selectedDevice(c)
         if frequency is None:
             resp = dev.get_dac_coarse_frequency()
             frequency = T.Value(resp, "MHz")
-        elif dev.static_check_dac_coarse_frequency(frequency["MHz"]):
-            dev.set_dac_coarse_frequency(frequency["MHz"])
         else:
-            raise ValueError(
-                QSMessage.ERR_FREQ_SETTING.format(
-                    "TX Corse NCO", QSConstants.DAC_CNCO_RESOL
-                )
-            )
+            dev.set_dac_coarse_frequency(frequency["MHz"])
         return frequency
+
 
     @setting(
         402,
@@ -1220,6 +1230,25 @@ class QuBE_Server(DeviceServer):
 
     @setting(403, "Frequency RX NCO", frequency=["v[Hz]"], returns=["v[Hz]"])
     def coarse_rx_nco_frequency(self, c, frequency=None):
+        # dev = self.selectedDevice(c)
+        # if QSConstants.CNL_READ_VAL != dev.device_role:
+        #     raise Exception(
+        #         QSMessage.ERR_INVALID_DEV.format("readout", dev.device_name)
+        #     )
+        # elif frequency is None:
+        #     resp = dev.get_adc_coarse_frequency()
+        #     frequency = T.Value(resp, "MHz")
+        # elif dev.static_check_adc_coarse_frequency(frequency["MHz"]):
+        #     dev.set_adc_coarse_frequency(frequency["MHz"])
+        # else:
+        #     raise ValueError(
+        #         QSMessage.ERR_FREQ_SETTING.format(
+        #             "RX Corse NCO", QSConstants.ADC_CNCO_RESOL
+        #         )
+        #     )
+        # return frequency
+
+        # TODO: static_check_adc_coarse_frequency
         dev = self.selectedDevice(c)
         if QSConstants.CNL_READ_VAL != dev.device_role:
             raise Exception(
@@ -1228,14 +1257,8 @@ class QuBE_Server(DeviceServer):
         elif frequency is None:
             resp = dev.get_adc_coarse_frequency()
             frequency = T.Value(resp, "MHz")
-        elif dev.static_check_adc_coarse_frequency(frequency["MHz"]):
-            dev.set_adc_coarse_frequency(frequency["MHz"])
         else:
-            raise ValueError(
-                QSMessage.ERR_FREQ_SETTING.format(
-                    "RX Corse NCO", QSConstants.ADC_CNCO_RESOL
-                )
-            )
+            dev.set_adc_coarse_frequency(frequency["MHz"])
         return frequency
 
     @setting(404, "Frequency Sideband", sideband=["s"], returns=["s"])
