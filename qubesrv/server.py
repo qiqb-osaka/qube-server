@@ -175,7 +175,7 @@ class QuBE_Server(DeviceServer):
             #rline = "m"
             rline = "r"
             print(f"gen_awg() name: {name}, group: {group}, line: {line}, rline: {rline}")
-            chs = box.css._get_channels_of_line(group, line)
+            chs = box._dev.get_channels_of_line(group, line)
             for i in range(len(chs)):
                 awg_idx = rmap.get_awg_of_channel(group, line, i)
                 awg_ch_ids.append(awg_idx)
@@ -739,6 +739,13 @@ class QuBE_Server(DeviceServer):
                     "awg index", 0, dev.number_of_awgs - 1
                 )
             )
+        
+        # TODO: 後で消す
+        print("upload_waveform")
+        print("waveforms.shape: ", waveforms.shape)
+        print("np.abs(waveforms): ", np.abs(waveforms))
+        print("np.max(waveforms): ", np.max(waveforms))
+        print("np.min(waveforms): ", np.min(waveforms))
 
         resp, number_of_chans, data_length = dev.check_waveform(waveforms, channels)
         if not resp:
