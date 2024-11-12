@@ -133,7 +133,7 @@ class QuBE_Server(DeviceServer):
             8: (1,2),
             9: (1,3)           
         }
-        print(f"get_dac_group_line_from_name port_string: {port_string} ")
+        #print(f"get_dac_group_line_from_name port_string: {port_string} ")
         port = int(port_string)
         return port_group_map.get(port)
 
@@ -174,7 +174,7 @@ class QuBE_Server(DeviceServer):
             # TODO: モニター
             #rline = "m"
             rline = "r"
-            print(f"gen_awg() name: {name}, group: {group}, line: {line}, rline: {rline}")
+            # print(f"gen_awg() name: {name}, group: {group}, line: {line}, rline: {rline}")
             chs = box._dev.get_channels_of_line(group, line)
             for i in range(len(chs)):
                 awg_idx = rmap.get_awg_of_channel(group, line, i)
@@ -202,7 +202,7 @@ class QuBE_Server(DeviceServer):
             )
             pmaper = QubePortMapper(box_type_str)
             group, line = self.get_dac_group_line_from_name(box, pmaper, name)
-            print(f"name: {name}, group: {group}, line: {line}")
+            #print(f"name: {name}, group: {group}, line: {line}")
             # TODO: モニター: こちらはモニターの場合でも"r"のままでよい
             cap_mod_id = rmap.get_capture_module_of_rline(group, "r")
             #cap_mod_id = rmap.get_capture_module_of_rline(group, "m")
@@ -740,13 +740,6 @@ class QuBE_Server(DeviceServer):
                 )
             )
         
-        # TODO: 後で消す
-        print("upload_waveform")
-        print("waveforms.shape: ", waveforms.shape)
-        print("np.abs(waveforms): ", np.abs(waveforms))
-        print("np.max(waveforms): ", np.max(waveforms))
-        print("np.min(waveforms): ", np.min(waveforms))
-
         resp, number_of_chans, data_length = dev.check_waveform(waveforms, channels)
         if not resp:
             raise ValueError(QSMessage.ERR_INVALID_WAVD.format(number_of_chans))
@@ -1128,7 +1121,7 @@ class QuBE_Server(DeviceServer):
         """
         dev = self.selectedDevice(c)
         # TODO: 後で消す
-        print(f"dev.device_name: {dev.device_name}")
+        #print(f"dev.device_name: {dev.device_name}")
         if frequency is None:
             resp = dev.get_lo_frequency()
             frequency = T.Value(resp, "MHz")
