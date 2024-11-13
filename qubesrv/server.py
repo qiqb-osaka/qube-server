@@ -279,17 +279,17 @@ class QuBE_Server(DeviceServer):
 
         for name in self.possibleLinks.keys():
             print(QSMessage.CHECKING_QUBEUNIT.format(name))
-            try:
-                res = pingger(self.possibleLinks[name][QSConstants.SRV_IPFPGA_TAG])
-                if 0 == res:
-                    res = pingger(self.possibleLinks[name][QSConstants.SRV_IPLSI_TAG])
-                if 0 != res:
-                    res = pingger(self.possibleLinks[name][QSConstants.SRV_IPCLK_TAG])
-                if 0 != res:
-                    raise Exception(QSMessage.ERR_HOST_NOTFOUND.format(name))
-            except Exception as e:
-                print(sys._getframe().f_code.co_name, e)
-                continue
+            # try:
+            #     res = pingger(self.possibleLinks[name][QSConstants.SRV_IPFPGA_TAG])
+            #     if 0 == res:
+            #         res = pingger(self.possibleLinks[name][QSConstants.SRV_IPLSI_TAG])
+            #     if 0 != res:
+            #         res = pingger(self.possibleLinks[name][QSConstants.SRV_IPCLK_TAG])
+            #     if 0 != res:
+            #         raise Exception(QSMessage.ERR_HOST_NOTFOUND.format(name))
+            # except Exception as e:
+            #     print(sys._getframe().f_code.co_name, e)
+            #     continue
 
             print(QSMessage.CNCTABLE_QUBEUNIT.format(name))
             devices = self.instantiateQube(name, self.possibleLinks[name])

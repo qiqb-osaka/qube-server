@@ -10,6 +10,7 @@ export QUBECALIB_PATH_TO_ROOT=$LIB_PATH/qube-calib
 mkdir -p $HOME/log
 
 # start labrad as a background process
+ulimit -n 65536
 labrad &
 
 # env LABRADHOST=localhost \
