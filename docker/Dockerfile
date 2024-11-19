@@ -15,7 +15,8 @@ ARG LABRAD_VERSION=0.8.3
 # labrad environment variables
 # https://github.com/labrad/pylabrad/blob/master/CONFIG.md
 ENV LABRADUSER=
-ENV LABRADPASSWORD=Cooper2e
+#ENV LABRADPASSWORD=Cooper2e
+ENV LABRADPASSWORD=
 ENV LABRADHOST=localhost
 ENV LABRADPORT=7682
 ENV LABRAD_TLS=starttls
@@ -32,7 +33,8 @@ RUN apt update && \
     default-jre \
     vim nano curl wget \
     libgirepository1.0-dev \
-    iputils-ping iproute2 dnsutils
+    iputils-ping iproute2 dnsutils \
+    libcairo2-dev pkg-config gir1.2-gtk-3.0 libgtk-3-dev
 
 ENV JAVA_HOME=/usr/lib/jvm/default-java
 

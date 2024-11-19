@@ -56,33 +56,46 @@ def main(
     )
     
     wiring_info = {
-    # "bias": {
-    #     "M5": {
-    #         "device_id": "ou1-02-readout_01"
-    #     },
-    #     "M9": {
-    #         "device_id": "ou3-01-readout_01"
-    #     }
-    # },
-    'control': {
-        'Q20': {'device_id': 'ou1-02-control_5'},
-        'Q21': {'device_id': 'ou1-02-control_6'},
-        'Q22': {'device_id': 'ou1-02-control_7'},
-        'Q23': {'device_id': 'ou1-02-control_8'},
-        'Q36': {'device_id': 'ou3-01-control_5'},
-        'Q37': {'device_id': 'ou3-01-control_6'},
-        'Q38': {'device_id': 'ou3-01-control_7'},
-        'Q39': {'device_id': 'ou3-01-control_8'}
-    },
-    "readout": {
-        "M5": {
-            "device_id": "ou1-02-readout_01"
+        'control': {
+            'Q16': {'device_id': 'riken1-01-control_5'},
+            'Q17': {'device_id': 'riken1-01-control_6'},
+            'Q18': {'device_id': 'riken1-01-control_7'},
+            'Q19': {'device_id': 'riken1-01-control_8'},
+            'Q20': {'device_id': 'ou1-02-control_5'},
+            'Q21': {'device_id': 'ou1-02-control_6'},
+            'Q22': {'device_id': 'ou1-02-control_7'},
+            'Q23': {'device_id': 'ou1-02-control_8'},
+            'Q36': {'device_id': 'ou3-01-control_5'},
+            'Q37': {'device_id': 'ou3-01-control_6'},
+            'Q38': {'device_id': 'ou3-01-control_7'},
+            'Q39': {'device_id': 'ou3-01-control_8'},
+            'Q52': {'device_id': 'Quel-1_5-01-control_5'},
+            'Q53': {'device_id': 'Quel-1_5-01-control_6'},
+            'Q54': {'device_id': 'Quel-1_5-01-control_7'},
+            'Q55': {'device_id': 'Quel-1_5-01-control_8'},
+            'Q60': {'device_id': 'riken1-10-control_5'},
+            'Q61': {'device_id': 'riken1-10-control_6'},
+            'Q62': {'device_id': 'riken1-10-control_7'},
+            'Q63': {'device_id': 'riken1-10-control_8'},
         },
-        "M9": {
-            "device_id": "ou3-01-readout_01"
+        "readout": {
+            "M4": {
+                "device_id": "riken1-01-readout_01"
+            },
+            "M5": {
+                "device_id": "ou1-02-readout_01"
+            },
+            "M9": {
+                "device_id": "ou3-01-readout_01"
+            },
+            "M13": {
+                "device_id": "Quel-1_5-01-readout_01"
+            },
+            "M15": {
+                "device_id": "riken1-10-readout_01"
+            }
         }
-   }
-}
+    }
     
     session.save_wiring_info("XLD_current", wiring_info)
     #print(wiring_info)

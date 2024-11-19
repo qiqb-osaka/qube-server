@@ -19,8 +19,10 @@ reg.set("master_link", "10.3.0.255")
 
 with open("/root/config/possible_links.json", encoding="utf-8") as f:
     possible_links_dict = json.load(f)
+    print("register.py: possible_links_dict:", possible_links_dict)
     reg.set("possible_links", json.dumps(possible_links_dict))
 
 with open("/root/config/chassis_skew.json", encoding="utf-8") as f:
     possible_links_dict = json.load(f)
+    print("register.py: possible_links_dict:", possible_links_dict)
     reg.set("chassis_skew", json.dumps(possible_links_dict))

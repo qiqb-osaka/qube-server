@@ -177,6 +177,7 @@ class QuBE_Server(DeviceServer):
             group, line = pmaper.resolve_line(port)
             # TODO: rline type:B の場合は、rline = "m" にする？ そうでもないらしい。
             rline = "r"
+            #rline = "m"
             awg_ch_ids = []
             chs = box.css._get_channels_of_line(group, line)
             for i in range(len(chs)):
@@ -209,6 +210,7 @@ class QuBE_Server(DeviceServer):
             group, line = pmaper.resolve_line(port)
             # TODO: rline type:B の場合は、rline = "m" にする？ そうでもないらしい。
             rline = "r"
+            #rline = "m"
             cap_mod_id = rmap.get_capture_module_of_rline(group, rline)
             capture_units = CaptureModule.get_units(cap_mod_id)
 
@@ -300,6 +302,18 @@ class QuBE_Server(DeviceServer):
             self._sync_ctrl.update({name: sync_ctrl})
             yield
             # print(sys._getframe().f_code.co_name,found)
+
+
+        # # TODO: モニター
+        # ipfpga = '10.1.0.19'
+        # box_type = Quel1BoxType.QuBE_RIKEN_TypeA
+        # box = Quel1Box.create(
+        #     ipaddr_wss=ipfpga,
+        #     boxtype=box_type,
+        # )
+        # #box.css.activate_read_loop(0)
+        # box.css.deactivate_read_loop(0)
+
         returnValue(found)
 
     @setting(10, "Reload Skew", returns=["b"])
@@ -739,7 +753,24 @@ class QuBE_Server(DeviceServer):
             )
 
         resp, number_of_chans, data_length = dev.check_waveform(waveforms, channels)
+        # TODO: 後で消す
+        print(f"np.max(np.abs(waveforms)) :{np.max(np.abs(waveforms))}")
+        chans, length = waveforms.shape
+        print(f"chans: {chans}, length: {length}")
+        # for wf in waveforms:
+        #     for w in wf:
+        #         print(f"{w.real}, {w.imag}")
+
         if not resp:
+            # TODO: 後で消す
+            print(f"chans: {chans}, length: {length}")
+            print(f"waveforms: {waveforms}")
+            # for wf in waveforms:
+            #     for w in wf:
+            #         print(f"{w.real}, {w.imag}")
+            print(f"np.max(np.abs(waveforms)) :{np.max(np.abs(waveforms))}")
+            import traceback
+            print(traceback.format_exc())
             raise ValueError(QSMessage.ERR_INVALID_WAVD.format(number_of_chans))
 
         return dev.upload_waveform(waveforms, channels)
