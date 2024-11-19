@@ -1,5 +1,5 @@
 # specify python version as build arg
-ARG PYTHON_VERSION=3.9
+ARG PYTHON_VERSION=3.9.17
 
 # use official python image as base
 # https://hub.docker.com/_/python
@@ -48,12 +48,16 @@ ENV LIB_PATH=/root/lib
 ENV PYTHONPATH=$PYTHONPATH:$LIB_PATH
 WORKDIR $LIB_PATH
 
-# install pip dependencies
-# pylabrad is a python wrapper for labrad (scalabrad)
-# https://github.com/labrad/pylabrad
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir \
-    pylabrad \
+# # install pip dependencies
+# # pylabrad is a python wrapper for labrad (scalabrad)
+# # https://github.com/labrad/pylabrad
+# RUN pip install --upgrade pip && \
+#     pip install --no-cache-dir \
+#     pylabrad \
+#     h5py
+
+# not upgrade pip
+RUN pip install pylabrad \
     h5py
 
 # install pip dependencies for MT

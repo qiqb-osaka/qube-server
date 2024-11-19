@@ -243,10 +243,10 @@ class QuBE_Control_LSI(QuBE_DeviceBase):
             self._line = kw["line"]
             self._rline = kw["rline"]
 
-            # DEBUG: for buffered operation, not used.
-            self._lo_frequency = self.get_lo_frequency()
-            self._coarse_frequency = self.get_dac_coarse_frequency()
-            # DEBUG: for buffered operation, partly used.
+            # # DEBUG: for buffered operation, not used.
+            # self._lo_frequency = self.get_lo_frequency()
+            # self._coarse_frequency = self.get_dac_coarse_frequency()
+            # # DEBUG: for buffered operation, partly used.
 
         except Exception as e:
             print("Exception!!!!!!!!")

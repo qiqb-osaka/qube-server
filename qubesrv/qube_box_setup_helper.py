@@ -61,10 +61,12 @@ class QubeBoxInfo:
     
     @classmethod
     def get_box_type_str(cls, device_id):
+        #print(f"cls.box_info[device_id]:{cls.box_info[device_id]}")
         return cls.box_info[device_id]['type']        
     
     @classmethod
     def get_box_type(cls, device_id):
+        #print(f"cls.box_info[device_id]:{cls.box_info[device_id]}")
         return Quel1BoxType.fromstr(cls.box_info[device_id]['type'])
     
     @classmethod
