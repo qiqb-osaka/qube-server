@@ -204,11 +204,11 @@ class QubeBoxSetupHelper:
 
     def __init__(self, device_id):
         self.device_id = device_id
+        self.box_info = QubeBoxInfo()
         self.box = self._create_box(device_id)
         self.sequencer_client = self._create_sequencer_client(device_id)
         self.port_mapper = self._create_port_mapping(device_id)
         self.is_linkedup = False
-        self.box_info = QubeBoxInfo()
 
     def _create_box(self, device_id):
         ipaddr_wss = self.box_info.get_ipaddr_wss(device_id)
@@ -313,12 +313,15 @@ class QubeBoxSetupHelper:
         else:
             log_filepath = None
         with LogWriter(log_filepath, logging_level=logging_level):
-            linkup_ok = self.linkup(save_data=save_linkup_data, ignore_access_failure_of_adrf6780=ignore_access_failure_of_adrf6780)
-            if all(linkup_ok):
-                self.configure_lines(box_line_config)
-                self.open_all_lines()
-            else:
-                print("Linkup failed. Skipped configuring lines.")
+            # linkup_ok = self.linkup(save_data=save_linkup_data, ignore_access_failure_of_adrf6780=ignore_access_failure_of_adrf6780)
+            # if all(linkup_ok):
+            #     self.configure_lines(box_line_config)
+            #     self.open_all_lines()
+            # else:
+            #     print("Linkup failed. Skipped configuring lines.")
+
+            self.configure_lines(box_line_config)
+            self.open_all_lines()
 
     def get_awgs_of_port(self, port):
         group, line = self.port_mapper.resolve_line(port)
