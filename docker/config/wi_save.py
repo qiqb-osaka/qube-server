@@ -49,68 +49,15 @@ def main(
         #labrad_hostname = "localhost", 
         labrad_username = "",
         labrad_password = "Cooper2e",
-        labrad_password = "",
+        #labrad_password = "",
         cooling_down_id = "CD26",
         experiment_username = "cloud",
         package_name = "Al64Q1",
     )
     
-    wiring_info = {
-    "bias": {
-        "M0": {
-            "device_id": "quel1se-1-01"
-        },
-        "M1": {
-            "device_id": "quel1se-1-02"
-        }
-    },
-    "control": {
-        "Q0": {
-            "device_id": "quel1se-1-01-control_6"
-        },
-        "Q1": {
-            "device_id": "quel1se-1-01-control_7"
-        },
-        "Q2": {
-            "device_id": "quel1se-1-01-control_8"
-        },
-        "Q3": {
-            "device_id": "quel1se-1-01-control_9"
-        },
-        "Q4": {
-            "device_id": "quel1se-1-02-control_6"
-        },
-        "Q5": {
-            "device_id": "quel1se-1-02-control_7"
-        },
-        "Q6": {
-            "device_id": "quel1se-1-02-control_8"
-        },
-        "Q7": {
-            "device_id": "quel1se-1-02-control_9"
-        }
-    },
-    "pump": {
-        "M0": {
-            "device_id": "quel1se-1-01-pump_2"
-        },
-        "M1": {
-            "device_id": "quel1se-1-02-pump_2"
-        }
-    },
-    "readout": {
-        "M0": {
-            "device_id": "quel1se-1-01-readout_1"
-        },
-        "M1": {
-            "device_id": "quel1se-1-02-readout_1"
-        }
-   }
-}
-    
-    session.save_wiring_info("XLD_current", wiring_info)
-    #print(wiring_info)
-
+    with open("wiring_info.json") as fin:
+        wiring_info = json.load(fin)
+        session.save_wiring_info("XLD2_current", wiring_info)
 
 if __name__ == "__main__":
     app()
