@@ -15,7 +15,7 @@ services:
       - ./script:/root/script
       - ./log:/root/log
       - ./work:/root/work
-      - /home/labrad/labrad-data/:/root/labrad-data
+      - /data1/labrad-data/:/root/labrad-data
     network_mode: "host"
     environment:
       - LABRADPORT=7682

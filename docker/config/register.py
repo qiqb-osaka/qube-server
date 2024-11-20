@@ -10,4 +10,4 @@ cxn = labrad.connect()
 # create the directory for the qube server
 reg = cxn.registry
 reg.cd(["Servers", "Data Vault", "Repository"])
-reg.set("kappa_docker", "/home/labrad/labrad-data")
+reg.set("kappa_docker", "/root/labrad-data")
